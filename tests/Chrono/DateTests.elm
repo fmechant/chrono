@@ -39,4 +39,18 @@ all =
                         |> toWeekday
                         |> Expect.equal Time.Thu
             ]
+        , describe "toNoon"
+            [ test "toNoon on January 1, 1970 is 43200000 in utc." <|
+                \() ->
+                    Moment.fromMsSinceEpoch 0
+                        |> fromMoment Chrono.Time.utc
+                        |> toNoon Chrono.Time.utc
+                        |> Expect.equal (Moment.fromMsSinceEpoch 43200000)
+            , test "toNoon on January 1, 1970 is 0 in GMT+12." <|
+                \() ->
+                    Moment.fromMsSinceEpoch 0
+                        |> fromMoment Chrono.Time.utc
+                        |> toNoon (Chrono.Time.customZone (12 * 60) [])
+                        |> Expect.equal (Moment.fromMsSinceEpoch 0)
+            ]
         ]

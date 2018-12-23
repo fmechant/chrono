@@ -5,6 +5,7 @@ module Chrono.Time exposing
     , fromMoment
     , here
     , moveIntoFutureForZone
+    , moveIntoPastForZone
     , toMsSinceNoon
     , utc
     , zoneWithSameOffset
@@ -95,6 +96,14 @@ moveIntoFutureForZone zone moment =
     in
     Moment.fromMsSinceEpoch (ms + relevantOffset zone ms)
 
+
+moveIntoPastForZone : Zone -> Moment -> Moment
+moveIntoPastForZone zone moment =
+    let
+        ms =
+            Moment.toMsAfterEpoch moment
+    in
+    Moment.fromMsSinceEpoch (ms - relevantOffset zone ms)
 
 
 relevantOffset : Zone -> Int -> Int

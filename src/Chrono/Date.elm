@@ -4,6 +4,7 @@ module Chrono.Date exposing
     , fromMoment
     , toJDN
     , toMoment
+    , toNoon
     , toWeekday
     )
 
@@ -99,6 +100,15 @@ toWeekday (Date jdn) =
 
         _ ->
             Time.Sun
+
+
+toNoon : Chrono.Time.Zone -> Date -> Moment
+toNoon zone (Date jdn) =
+    let
+        noonInUtc =
+            Moment.fromMsSinceEpoch <| (jdn - 2440588) * 86400000 + 43200000
+    in
+    Chrono.Time.moveIntoPastForZone zone noonInUtc
 
 
 {-| Create the date that corresponds to the Julian Day Number.
