@@ -1,4 +1,11 @@
-module Chrono.Date exposing (Date, fromJDN, fromMoment, toJDN, toMoment)
+module Chrono.Date exposing
+    ( Date
+    , fromJDN
+    , fromMoment
+    , toJDN
+    , toMoment
+    , toWeekday
+    )
 
 import Chrono.Moment as Moment exposing (Moment)
 import Chrono.Time exposing (Time)
@@ -64,6 +71,33 @@ toMoment zone time date =
 toJDN : Date -> Int
 toJDN (Date jdn) =
     jdn
+
+
+{-| What day of the week is it?
+-}
+toWeekday : Date -> Time.Weekday
+toWeekday (Date jdn) =
+    case modBy 7 jdn + 1 of
+        1 ->
+            Time.Mon
+
+        2 ->
+            Time.Tue
+
+        3 ->
+            Time.Wed
+
+        4 ->
+            Time.Thu
+
+        5 ->
+            Time.Fri
+
+        6 ->
+            Time.Sat
+
+        _ ->
+            Time.Sun
 
 
 {-| Create the date that corresponds to the Julian Day Number.
