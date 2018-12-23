@@ -1,5 +1,7 @@
 {
     "type": "application",
+    "name": "fmech/chrono",
+    "summary": "Work with moments in time, dates and times of day in Elm",
     "license": "BSD-3-Clause",
     "source-directories": [
         "src"
