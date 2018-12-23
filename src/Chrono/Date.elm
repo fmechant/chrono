@@ -39,7 +39,7 @@ fromMoment : Chrono.Time.Zone -> Moment -> Date
 fromMoment zone moment =
     let
         shiftedPosix =
-            Chrono.Time.shiftForZone zone <| Moment.toMsAfterEpoch moment
+            Chrono.Time.moveIntoFutureForZone zone <| Moment.toMsAfterEpoch moment
 
         positiveJdn =
             shiftedPosix // 86400000 + 2440588

@@ -4,7 +4,7 @@ module Chrono.Time exposing
     , customZone
     , fromMoment
     , here
-    , shiftForZone
+    , moveIntoFutureForZone
     , toMsSinceNoon
     , utc
     , zoneWithSameOffset
@@ -68,7 +68,7 @@ zoneWithSameOffset zone =
 fromMoment : Zone -> Moment -> Time
 fromMoment zone moment =
     Time <|
-        modBy 86400000 (shiftForZone zone <| Moment.toMsAfterEpoch moment)
+        modBy 86400000 (moveIntoFutureForZone zone <| Moment.toMsAfterEpoch moment)
             - 43200000
 
 
@@ -87,8 +87,8 @@ customZone =
     Zone
 
 
-shiftForZone : Zone -> Int -> Int
-shiftForZone (Zone defaultOffset eras) ms =
+moveIntoFutureForZone : Zone -> Int -> Int
+moveIntoFutureForZone (Zone defaultOffset eras) ms =
     ms
         + (minutesInMs <|
             case List.head (List.filter (\era -> minutesInMs era.start < ms) eras) of
