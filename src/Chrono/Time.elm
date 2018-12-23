@@ -68,7 +68,7 @@ zoneWithSameOffset zone =
 fromMoment : Zone -> Moment -> Time
 fromMoment zone moment =
     Time <|
-        modBy 86400000 (moveIntoFutureForZone zone <| Moment.toMsAfterEpoch moment)
+        modBy 86400000 (Moment.toMsAfterEpoch <| moveIntoFutureForZone zone moment)
             - 43200000
 
 
@@ -87,17 +87,25 @@ customZone =
     Zone
 
 
-moveIntoFutureForZone : Zone -> Int -> Int
-moveIntoFutureForZone (Zone defaultOffset eras) ms =
-    ms
-        + (minutesInMs <|
-            case List.head (List.filter (\era -> minutesInMs era.start < ms) eras) of
-                Just era ->
-                    era.offset
+moveIntoFutureForZone : Zone -> Moment -> Moment
+moveIntoFutureForZone zone moment =
+    let
+        ms =
+            Moment.toMsAfterEpoch moment
+    in
+    Moment.fromMsSinceEpoch (ms + relevantOffset zone ms)
 
-                Nothing ->
-                    defaultOffset
-          )
+
+
+relevantOffset : Zone -> Int -> Int
+relevantOffset (Zone defaultOffset eras) ms =
+    minutesInMs <|
+        case List.head (List.filter (\era -> minutesInMs era.start < ms) eras) of
+            Just era ->
+                era.offset
+
+            Nothing ->
+                defaultOffset
 
 
 minutesInMs : Int -> Int
