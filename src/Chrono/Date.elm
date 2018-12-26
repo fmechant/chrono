@@ -24,7 +24,7 @@ November 24, 4714 BC, in the proleptic Gregorian calendar.
 
 -}
 type Date
-    = Date Int
+    = JDN Int
 
 
 {-| Get the date at the moment when this task is run and in the time zone
@@ -53,7 +53,7 @@ fromMoment zone moment =
             else
                 positiveJdn
     in
-    Date jdn
+    JDN jdn
 
 
 andTimeFromMoment : Chrono.Time.Zone -> Time -> Moment -> { date : Date, time : Time }
@@ -71,14 +71,14 @@ toMoment zone time date =
 {-| Convert to the Julian Day Number.
 -}
 toJDN : Date -> Int
-toJDN (Date jdn) =
+toJDN (JDN jdn) =
     jdn
 
 
 {-| What day of the week is it?
 -}
 toWeekday : Date -> Time.Weekday
-toWeekday (Date jdn) =
+toWeekday (JDN jdn) =
     case modBy 7 jdn + 1 of
         1 ->
             Time.Mon
@@ -103,7 +103,7 @@ toWeekday (Date jdn) =
 
 
 toNoon : Chrono.Time.Zone -> Date -> Moment
-toNoon zone (Date jdn) =
+toNoon zone (JDN jdn) =
     let
         noonInUtc =
             Moment.fromMsSinceEpoch <| (jdn - 2440588) * 86400000 + 43200000
@@ -116,15 +116,15 @@ Can be used by a calendar to create the correct date.
 -}
 fromJDN : Int -> Date
 fromJDN jdn =
-    Date jdn
+    JDN jdn
 
 
 {-| Move the date a number of days into the future.
 Negative numbers will move to the past.
 -}
 move : Int -> Date -> Date
-move numberOfDays (Date date) =
-    Date (date + numberOfDays)
+move numberOfDays (JDN date) =
+    JDN (date + numberOfDays)
 
 
 toMonthNumber : Time.Month -> Int
