@@ -18,6 +18,7 @@ uses.
 
 import Chrono.Moment as Moment exposing (Moment)
 import Chrono.Time exposing (Time)
+import Chrono.TimeZone as TimeZone exposing (TimeZone)
 import Task exposing (Task)
 import Time
 
@@ -39,18 +40,18 @@ where this task is run.
 -}
 today : Task x Date
 today =
-    Task.map2 fromMoment (Task.map Chrono.Time.zoneWithSameOffset Time.here) <|
+    Task.map2 fromMoment (Task.map TimeZone.withSameOffset Time.here) <|
         Task.map (Moment.fromMsSinceEpoch << Time.posixToMillis) Time.now
 
 
 {-| Find out the date at this moment, in this time zone.
 -}
-fromMoment : Chrono.Time.Zone -> Moment -> Date
+fromMoment : TimeZone -> Moment -> Date
 fromMoment zone moment =
     let
         shiftedPosix =
             Moment.toMsAfterEpoch <|
-                Chrono.Time.moveIntoFutureForZone zone moment
+                Moment.intoFutureForZone zone moment
 
         positiveJdn =
             shiftedPosix // 86400000 + 2440588
@@ -63,13 +64,6 @@ fromMoment zone moment =
                 positiveJdn
     in
     JDN jdn
-
-
-andTimeFromMoment : Chrono.Time.Zone -> Time -> Moment -> { date : Date, time : Time }
-andTimeFromMoment zone time moment =
-    { date = fromMoment zone moment
-    , time = Chrono.Time.fromMoment zone moment
-    }
 
 
 toMoment : Time.Zone -> Time -> Date -> Moment
@@ -111,13 +105,13 @@ toWeekday (JDN jdn) =
             Time.Sun
 
 
-toNoon : Chrono.Time.Zone -> Date -> Moment
+toNoon : TimeZone -> Date -> Moment
 toNoon zone (JDN jdn) =
     let
         noonInUtc =
             Moment.fromMsSinceEpoch <| (jdn - 2440588) * 86400000 + 43200000
     in
-    Chrono.Time.moveIntoPastForZone zone noonInUtc
+    Moment.intoPastForZone zone noonInUtc
 
 
 {-| Create the date that corresponds to the Julian Day Number.

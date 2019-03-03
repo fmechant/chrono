@@ -2,11 +2,14 @@ module Chrono.Moment exposing
     ( Duration
     , Moment
     , and
+    , chronologicalComparison
     , elapsed
     , fromMsSinceEpoch
     , hours
     , intoFuture
+    , intoFutureForZone
     , intoPast
+    , intoPastForZone
     , milliseconds
     , minutes
     , now
@@ -19,6 +22,7 @@ module Chrono.Moment exposing
 first started reading this sentence.
 -}
 
+import Chrono.TimeZone as TimeZone exposing (TimeZone)
 import Task exposing (Task)
 import Time
 
@@ -84,7 +88,7 @@ intoPast (Duration durationInMs) (Moment momentInMs) =
     later = intoFuture (minutes 5) base
     earlier = intoPast (hours 20) base
 
-    compareChronologically base later
+    chronologicalComparison base later
     --> LT
 
     List.sortWith chronologicalComparison [later, earlier, base]
@@ -94,6 +98,24 @@ intoPast (Duration durationInMs) (Moment momentInMs) =
 chronologicalComparison : Moment -> Moment -> Order
 chronologicalComparison (Moment m) (Moment n) =
     Basics.compare m n
+
+
+intoFutureForZone : TimeZone -> Moment -> Moment
+intoFutureForZone zone moment =
+    let
+        ms =
+            toMsAfterEpoch moment
+    in
+    fromMsSinceEpoch (ms + TimeZone.relevantOffset zone ms)
+
+
+intoPastForZone : TimeZone -> Moment -> Moment
+intoPastForZone zone moment =
+    let
+        ms =
+            toMsAfterEpoch moment
+    in
+    fromMsSinceEpoch (ms - TimeZone.relevantOffset zone ms)
 
 
 
@@ -152,7 +174,7 @@ Example:
     hours 2
         |> and minutes 45
         |> viewDuration
-    --> { hours: 2, minutes:45, seconds: 0, milliseconds: 0}
+    --> { hours: 2, minutes: 45, seconds: 0, milliseconds: 0}
 
 -}
 and : (Int -> Duration) -> Int -> Duration -> Duration
