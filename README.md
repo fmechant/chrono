@@ -10,15 +10,19 @@ This package does not hide the complexity, but makes it easier to work with.
 Instead of mixing the concepts of moments in time and date and times, we choose
 to make the distinction explicit.
 
+### The Moment Model
 The moment model represents specific moments in time. For example the moment you
 first started reading this sentence.
 
+### The Date and Time Model
 The date and time model represents the abstract concepts of date and time. For
 example New Years Day in 2019.
 
+### Conversion Between Models
 To convert from one model to the other, we need a time zone. Everybody knows New
 Years is celebrated earlier in Europe than it is in America, for example.
 
+### Example
 A good example of how to deal with preventing the mixture of concepts is when
 creating a recurrent meeting:
 Suppose we want to make a meeting recurrent for the next three weeks.
