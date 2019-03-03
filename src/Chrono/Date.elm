@@ -8,6 +8,14 @@ module Chrono.Date exposing
     , toWeekday
     )
 
+{-| A date is an abstract understanding of a period of time.
+It is independent of a time zone.
+
+Mark that the concept of the date is independent of the Calendar one
+uses.
+
+-}
+
 import Chrono.Moment as Moment exposing (Moment)
 import Chrono.Time exposing (Time)
 import Task exposing (Task)
@@ -15,7 +23,6 @@ import Time
 
 
 {-| A date is an abstract understanding of a period of time.
-It is independent of a time zone.
 
 The internal representation of the Date is the Julian Day Number.
 This is the number of days since the Julian day number 0, which is
@@ -36,6 +43,8 @@ today =
         Task.map (Moment.fromMsSinceEpoch << Time.posixToMillis) Time.now
 
 
+{-| Find out the date at this moment, in this time zone.
+-}
 fromMoment : Chrono.Time.Zone -> Moment -> Date
 fromMoment zone moment =
     let

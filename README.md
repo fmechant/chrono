@@ -4,7 +4,7 @@ Work with moments in time, dates and times of day in Elm.
 
 ## Motivation
 
-Working accurately with dates and times is complex.
+Working accurately with dates and times is surprisingly complex.
 This package does not hide the complexity, but makes it easier to work with.
 
 Instead of mixing the concepts of moments in time and date and times, we choose
@@ -45,6 +45,7 @@ represent, and then use the relevant model, so subtle errors are avoided.
 
 ## Examples
 
+TODO
 
 Here is an example of notifying the user 10 minutes before a scheduled meeting
 is about to happen:
