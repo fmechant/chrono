@@ -174,7 +174,7 @@ Example:
     hours 2
         |> and minutes 45
         |> viewDuration
-    --> { hours: 2, minutes: 45, seconds: 0, milliseconds: 0}
+    --> { hours = 2, minutes = 45, seconds = 0, milliseconds = 0}
 
 -}
 and : (Int -> Duration) -> Int -> Duration -> Duration
