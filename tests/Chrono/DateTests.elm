@@ -50,6 +50,49 @@ all =
                         |> toNoon (TimeZone.customZone (12 * 60) [])
                         |> Expect.equal (Moment.fromMsSinceEpoch 0)
             ]
+        , describe "move"
+            [ fuzz fuzzThursday "next to current weekday should move a week" <|
+                \aThursday ->
+                    aThursday
+                        |> next Thursday
+                        |> Expect.equal (intoFuture (weeks 1) aThursday)
+            , fuzz fuzzThursday "next to day earlier in the week should move to next week" <|
+                \aThursday ->
+                    aThursday
+                        |> next Wednesday
+                        |> Expect.equal (intoFuture (days 6) aThursday)
+            , fuzz fuzzThursday "next to day later this week should stay in this week" <|
+                \aThursday ->
+                    aThursday
+                        |> next Saterday
+                        |> Expect.equal (intoFuture (days 2) aThursday)
+            , fuzz fuzzThursday "last to current weekday should move a week" <|
+                \aThursday ->
+                    aThursday
+                        |> last Thursday
+                        |> Expect.equal (intoPast (weeks 1) aThursday)
+            , fuzz fuzzThursday "next to day earlier in the week should stay in this week" <|
+                \aThursday ->
+                    aThursday
+                        |> last Wednesday
+                        |> Expect.equal (intoPast (days 1) aThursday)
+            , fuzz fuzzThursday "next to day later this week should move to the previous week" <|
+                \aThursday ->
+                    aThursday
+                        |> last Saterday
+                        |> Expect.equal (intoPast (days 5) aThursday)
+            , fuzz2 fuzzDate Fuzz.int "moving weeks is the same are moving 7 times that in days." <|
+                \aDate noWeeks ->
+                    aDate
+                        |> intoFuture (weeks noWeeks)
+                        |> Expect.equal (intoFuture (days (noWeeks * 7)) aDate)
+            , fuzz2 fuzzDate fuzzDuration "moving into future and then the same into past is staying here." <|
+                \aDate aDuration ->
+                    aDate
+                        |> intoFuture aDuration
+                        |> intoPast aDuration
+                        |> Expect.equal aDate
+            ]
         ]
 
 

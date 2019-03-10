@@ -7,6 +7,8 @@ module Chrono.Date exposing
     , fromMoment
     , intoFuture
     , intoPast
+    , last
+    , next
     , toJDN
     , toMoment
     , toNoon
@@ -187,6 +189,56 @@ intoFuture (Duration numberOfDays) (JDN date) =
 intoPast : Duration -> Date -> Date
 intoPast (Duration numberOfDays) date =
     intoFuture (Duration -numberOfDays) date
+
+
+{-| Move the date into the future until the next day that is a specific weekday.
+If date is the weekday, it will move a week into the future.
+-}
+next : Weekday -> Date -> Date
+next weekday date =
+    let
+        target =
+            toWeekdayNumber weekday
+
+        current =
+            (toWeekday >> toWeekdayNumber) date
+
+        diff =
+            modBy 7 <| target - current
+
+        toMove =
+            if diff == 0 then
+                weeks 1
+
+            else
+                days diff
+    in
+    intoFuture toMove date
+
+
+{-| Move the date into the past until the previous day that is a specific weekday.
+If date is the weekday, it will move a week into the past.
+-}
+last : Weekday -> Date -> Date
+last weekday date =
+    let
+        target =
+            toWeekdayNumber weekday
+
+        current =
+            (toWeekday >> toWeekdayNumber) date
+
+        diff =
+            modBy 7 <| current - target
+
+        toMove =
+            if diff == 0 then
+                weeks 1
+
+            else
+                days diff
+    in
+    intoPast toMove date
 
 
 
