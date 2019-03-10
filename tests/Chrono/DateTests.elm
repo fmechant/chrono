@@ -2,6 +2,7 @@ module Chrono.DateTests exposing (all)
 
 import Chrono.Date exposing (..)
 import Chrono.Moment as Moment
+import Chrono.TestUtils exposing (..)
 import Chrono.TimeZone as TimeZone
 import Expect
 import Fuzz
@@ -86,7 +87,7 @@ all =
                     aDate
                         |> intoFuture (weeks noWeeks)
                         |> Expect.equal (intoFuture (days (noWeeks * 7)) aDate)
-            , fuzz2 fuzzDate fuzzDuration "moving into future and then the same into past is staying here." <|
+            , fuzz2 fuzzDate fuzzDateDuration "moving into future and then the same into past is staying here." <|
                 \aDate aDuration ->
                     aDate
                         |> intoFuture aDuration
@@ -120,18 +121,3 @@ firstJanuary1970 : Date
 firstJanuary1970 =
     epochMoment
         |> fromMoment TimeZone.utc
-
-
-fuzzDate : Fuzz.Fuzzer Date
-fuzzDate =
-    Fuzz.map fromJDN Fuzz.int
-
-
-fuzzDuration : Fuzz.Fuzzer Duration
-fuzzDuration =
-    Fuzz.map days Fuzz.int
-
-
-fuzzThursday : Fuzz.Fuzzer Date
-fuzzThursday =
-    Fuzz.map (\i -> fromJDN ((i // 7) * 7 + 3)) Fuzz.int

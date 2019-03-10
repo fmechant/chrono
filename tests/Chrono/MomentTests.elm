@@ -1,6 +1,7 @@
 module Chrono.MomentTests exposing (all)
 
 import Chrono.Moment exposing (..)
+import Chrono.TestUtils exposing (..)
 import Expect
 import Fuzz
 import Test exposing (..)
@@ -77,13 +78,3 @@ all =
                         |> Expect.equal (500 - 100015 - 75 * 1000 - 190 * 60000 - 20 * 3600000)
             ]
         ]
-
-
-fuzzMoment : Fuzz.Fuzzer Moment
-fuzzMoment =
-    Fuzz.map fromMsSinceEpoch Fuzz.int
-
-
-fuzzDuration : Fuzz.Fuzzer Duration
-fuzzDuration =
-    Fuzz.map milliseconds <| Fuzz.map abs Fuzz.int
