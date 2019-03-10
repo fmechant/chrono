@@ -11,7 +11,6 @@ import Chrono.Moment as Moment exposing (Moment)
 import Chrono.TimeZone as TimeZone exposing (TimeZone)
 import List
 import Task exposing (Task)
-import Time
 
 
 {-| A specific time of the day.

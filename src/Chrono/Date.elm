@@ -1,11 +1,13 @@
 module Chrono.Date exposing
     ( Date
+    , Weekday(..)
     , fromJDN
     , fromMoment
     , toJDN
     , toMoment
     , toNoon
     , toWeekday
+    , toWeekdayNumber
     )
 
 {-| A date is an abstract understanding of a period of time.
@@ -20,7 +22,7 @@ import Chrono.Moment as Moment exposing (Moment)
 import Chrono.Time exposing (Time)
 import Chrono.TimeZone as TimeZone exposing (TimeZone)
 import Task exposing (Task)
-import Time
+import Time as CoreTime
 
 
 {-| A date is an abstract understanding of a period of time.
@@ -35,13 +37,25 @@ type Date
     = JDN Int
 
 
+{-| A weekday.
+-}
+type Weekday
+    = Monday
+    | Tuesday
+    | Wednesday
+    | Thursday
+    | Friday
+    | Saterday
+    | Sunday
+
+
 {-| Get the date at the moment when this task is run and in the time zone
 where this task is run.
 -}
 today : Task x Date
 today =
-    Task.map2 fromMoment (Task.map TimeZone.withSameOffset Time.here) <|
-        Task.map (Moment.fromMsSinceEpoch << Time.posixToMillis) Time.now
+    Task.map2 fromMoment (Task.map TimeZone.withSameOffset CoreTime.here) <|
+        Task.map (Moment.fromMsSinceEpoch << CoreTime.posixToMillis) CoreTime.now
 
 
 {-| Find out the date at this moment, in this time zone.
@@ -66,7 +80,9 @@ fromMoment zone moment =
     JDN jdn
 
 
-toMoment : Time.Zone -> Time -> Date -> Moment
+{-| Convert the date and time, in this time zone, to the moment.
+-}
+toMoment : TimeZone -> Time -> Date -> Moment
 toMoment zone time date =
     Moment.fromMsSinceEpoch 0
 
@@ -80,29 +96,57 @@ toJDN (JDN jdn) =
 
 {-| What day of the week is it?
 -}
-toWeekday : Date -> Time.Weekday
+toWeekday : Date -> Weekday
 toWeekday (JDN jdn) =
     case modBy 7 jdn + 1 of
         1 ->
-            Time.Mon
+            Monday
 
         2 ->
-            Time.Tue
+            Tuesday
 
         3 ->
-            Time.Wed
+            Wednesday
 
         4 ->
-            Time.Thu
+            Thursday
 
         5 ->
-            Time.Fri
+            Friday
 
         6 ->
-            Time.Sat
+            Saterday
 
         _ ->
-            Time.Sun
+            Sunday
+
+
+{-| Convert the weekday to a number representing the weekday.
+1 is Monday, 7 is Sunday.
+-}
+toWeekdayNumber : Weekday -> Int
+toWeekdayNumber weekday =
+    case weekday of
+        Monday ->
+            1
+
+        Tuesday ->
+            2
+
+        Wednesday ->
+            3
+
+        Thursday ->
+            4
+
+        Friday ->
+            5
+
+        Saterday ->
+            6
+
+        Sunday ->
+            7
 
 
 toNoon : TimeZone -> Date -> Moment
@@ -130,41 +174,14 @@ move numberOfDays (JDN date) =
     JDN (date + numberOfDays)
 
 
-toMonthNumber : Time.Month -> Int
-toMonthNumber month =
-    case month of
-        Time.Jan ->
-            1
 
-        Time.Feb ->
-            2
 
-        Time.Mar ->
-            3
 
-        Time.Apr ->
-            4
 
-        Time.May ->
-            5
 
-        Time.Jun ->
-            6
 
-        Time.Jul ->
-            7
 
-        Time.Aug ->
-            8
 
-        Time.Sep ->
-            9
 
-        Time.Oct ->
-            10
 
-        Time.Nov ->
-            11
 
-        Time.Dec ->
-            12

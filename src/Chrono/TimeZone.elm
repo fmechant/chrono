@@ -15,7 +15,7 @@ because we need access to the offset.
 -}
 
 import Task exposing (Task)
-import Time
+import Time as CoreTime
 
 
 type TimeZone
@@ -38,17 +38,17 @@ customZone =
     TimeZone
 
 
-withSameOffset : Time.Zone -> TimeZone
+withSameOffset : CoreTime.Zone -> TimeZone
 withSameOffset zone =
     let
         day =
-            Time.toDay zone (Time.millisToPosix 0)
+            CoreTime.toDay zone (CoreTime.millisToPosix 0)
 
         hour =
-            Time.toHour zone (Time.millisToPosix 0)
+            CoreTime.toHour zone (CoreTime.millisToPosix 0)
 
         minute =
-            Time.toMinute zone (Time.millisToPosix 0)
+            CoreTime.toMinute zone (CoreTime.millisToPosix 0)
 
         offset =
             if day == 1 then
@@ -73,7 +73,7 @@ relevantOffset (TimeZone defaultOffset eras) ms =
 
 here : Task x TimeZone
 here =
-    Task.map withSameOffset Time.here
+    Task.map withSameOffset CoreTime.here
 
 
 minutesInMs : Int -> Int

@@ -24,7 +24,7 @@ first started reading this sentence.
 
 import Chrono.TimeZone as TimeZone exposing (TimeZone)
 import Task exposing (Task)
-import Time
+import Time as CoreTime
 
 
 {-| A specific moment in time.
@@ -37,7 +37,7 @@ type Moment
 -}
 now : Task x Moment
 now =
-    Task.map (fromMsSinceEpoch << Time.posixToMillis) Time.now
+    Task.map (fromMsSinceEpoch << CoreTime.posixToMillis) CoreTime.now
 
 
 {-| Get the moment that occured the number of milliseconds after the epoch.
