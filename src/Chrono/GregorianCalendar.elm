@@ -7,7 +7,9 @@ module Chrono.GregorianCalendar exposing
     , fromMonthNumber
     , intoFuture
     , intoPast
+    , isLeapYear
     , months
+    , stayInSameMonth
     , toDayMonthYear
     , toMonthNumber
     , years
@@ -64,6 +66,25 @@ toDayMonthYear date =
             (e // 1461) - 4716 + (12 + 2 - m) // 12
     in
     { day = d, month = fromMonthNumber m, year = y }
+
+
+{-| When confronted with impossible dates, moves to the closest valid day in the same month.
+Typically used when defining a duration of months or years.
+-}
+stayInSameMonth : { day : Int, month : Month, year : Int } -> { day : Int, month : Month, year : Int }
+stayInSameMonth dmy =
+    let
+        maxDay =
+            numberOfDaysInMonth dmy.month dmy.year
+    in
+    { day = clamp 1 maxDay dmy.day, month = dmy.month, year = dmy.year }
+
+
+{-| Is the given year a leap year.
+-}
+isLeapYear : Int -> Bool
+isLeapYear year =
+    (modBy 4 year == 0) && (modBy 100 year /= 0 || modBy 400 year == 0)
 
 
 
@@ -173,6 +194,52 @@ fromMonthNumber number =
             December
 
 
+{-| The total number of days in the month, in that year.
+-}
+numberOfDaysInMonth : Month -> Int -> Int
+numberOfDaysInMonth month year =
+    case month of
+        January ->
+            31
+
+        February ->
+            if isLeapYear year then
+                29
+
+            else
+                28
+
+        March ->
+            31
+
+        April ->
+            30
+
+        May ->
+            31
+
+        June ->
+            30
+
+        July ->
+            31
+
+        August ->
+            31
+
+        September ->
+            30
+
+        October ->
+            31
+
+        November ->
+            30
+
+        December ->
+            31
+
+
 
 ---- Move ----
 
@@ -185,6 +252,8 @@ intoFuture (Duration durations) date =
         |> List.foldl move date
 
 
+{-| Move the date a duration into the past.
+-}
 intoPast : Duration -> Date -> Date
 intoPast (Duration durations) date =
     durations
@@ -199,7 +268,7 @@ move item date =
             date
                 |> Date.intoFuture (Date.days noDays)
 
-        NumberOfMonths noMonths ->
+        NumberOfMonths noMonths strategy ->
             let
                 dmy =
                     toDayMonthYear date
@@ -223,18 +292,19 @@ move item date =
                     else
                         yearsDiffWhenPositieve
             in
-            fromDayMonthYear
-                { day = dmy.day
-                , month = fromMonthNumber <| 1 + modBy 12 newMonthMinusOne
-                , year = dmy.year + yearDiff + aPrioriYears
-                }
+            fromDayMonthYear <|
+                strategy
+                    { day = dmy.day
+                    , month = fromMonthNumber <| 1 + modBy 12 newMonthMinusOne
+                    , year = dmy.year + yearDiff + aPrioriYears
+                    }
 
-        NumberOfYears noYears ->
+        NumberOfYears noYears strategy ->
             let
                 dmy =
                     toDayMonthYear date
             in
-            fromDayMonthYear { day = dmy.day, month = dmy.month, year = dmy.year + noYears }
+            fromDayMonthYear <| strategy { day = dmy.day, month = dmy.month, year = dmy.year + noYears }
 
 
 negate : DurationItem -> DurationItem
@@ -243,11 +313,11 @@ negate item =
         NumberOfDays value ->
             NumberOfDays -value
 
-        NumberOfMonths value ->
-            NumberOfMonths -value
+        NumberOfMonths value strategy ->
+            NumberOfMonths -value strategy
 
-        NumberOfYears value ->
-            NumberOfYears -value
+        NumberOfYears value strategy ->
+            NumberOfYears -value strategy
 
 
 
@@ -263,8 +333,8 @@ type Duration
 
 type DurationItem
     = NumberOfDays Int
-    | NumberOfMonths Int
-    | NumberOfYears Int
+    | NumberOfMonths Int ({ day : Int, month : Month, year : Int } -> { day : Int, month : Month, year : Int })
+    | NumberOfYears Int ({ day : Int, month : Month, year : Int } -> { day : Int, month : Month, year : Int })
 
 
 days : Int -> Duration
@@ -272,31 +342,25 @@ days value =
     Duration [ NumberOfDays value ]
 
 
-months : Int -> Duration
-months value =
-    Duration [ NumberOfMonths value ]
+months : Int -> ({ day : Int, month : Month, year : Int } -> { day : Int, month : Month, year : Int }) -> Duration
+months value strategy =
+    Duration [ NumberOfMonths value strategy ]
 
 
-years : Int -> Duration
-years value =
-    Duration [ NumberOfYears value ]
+years : Int -> ({ day : Int, month : Month, year : Int } -> { day : Int, month : Month, year : Int }) -> Duration
+years value strategy =
+    Duration [ NumberOfYears value strategy ]
 
 
 {-| Combine two durations.
 
-It has an odd signiture to be able to efficiently use it using the pipe (|>) operator.
 Example:
 
-    years 2
-        |> andThen days 15
-        |> viewDuration
-    --> { days: 15, months: 0, years: 2}
+    fromDayMonthYear { day = 1, month = January, year = 2000  }
+        |> intoFuture (days 15 |> andThen (years 2 stayInSameMonth))
+    --> fromDayMonthYear { day = 16, month = January, year = 2002  }
 
 -}
-andThen : (Int -> Duration) -> Int -> Duration -> Duration
-andThen fct value (Duration durations) =
-    let
-        (Duration toAdd) =
-            fct value
-    in
+andThen : Duration -> Duration -> Duration
+andThen (Duration toAdd) (Duration durations) =
     Duration (durations ++ toAdd)

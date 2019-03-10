@@ -24,6 +24,24 @@ all =
                         |> toDayMonthYear
                         |> Expect.equal { year = 2000, month = February, day = 28 }
             ]
+        , describe "leap years"
+            [ test "2000 is a leap year" <|
+                \() ->
+                    isLeapYear 2000
+                        |> Expect.equal True
+            , test "2017 is a common year" <|
+                \() ->
+                    isLeapYear 2017
+                        |> Expect.equal False
+            , test "2100 is a common year" <|
+                \() ->
+                    isLeapYear 2100
+                        |> Expect.equal False
+            , test "2400 is a leap year" <|
+                \() ->
+                    isLeapYear 2400
+                        |> Expect.equal True
+            ]
         , describe "moving dates"
             [ test "into the future returns the correct date" <|
                 \() ->
@@ -33,19 +51,23 @@ all =
             , fuzz fuzzDate "0 months in the future is the same date" <|
                 \aDate ->
                     aDate
-                        |> intoFuture (months 0)
+                        |> intoFuture (months 0 stayInSameMonth)
                         |> Expect.equal aDate
             , test "takes the order of the duration into account" <|
                 \() ->
                     twentyEightFebruary2000
-                        |> intoFuture (days 3 |> andThen months 3)
+                        |> intoFuture (days 3 |> andThen (months 3 stayInSameMonth))
                         |> Expect.equal (fromDayMonthYear { day = 2, month = June, year = 2000 })
-            , fuzz2 fuzzDate fuzzDuration "moving into future and then the same into past is staying here." <|
-                \date duration ->
-                    date
-                        |> intoFuture duration
-                        |> intoPast duration
-                        |> Expect.equal date
+            , test "moving to 30 February stays in same month and becomes 28 February for common year" <|
+                \() ->
+                    fromDayMonthYear { day = 30, month = January, year = 2003 }
+                        |> intoFuture (months 1 stayInSameMonth)
+                        |> Expect.equal (fromDayMonthYear { day = 28, month = February, year = 2003 })
+            , test "moving to 30 February stays in same month and becomes 29 February for leap year" <|
+                \() ->
+                    fromDayMonthYear { day = 30, month = January, year = 2004 }
+                        |> intoFuture (months 1 stayInSameMonth)
+                        |> Expect.equal (fromDayMonthYear { day = 29, month = February, year = 2004 })
             ]
         ]
 
@@ -69,6 +91,6 @@ fuzzDuration : Fuzz.Fuzzer Duration
 fuzzDuration =
     Fuzz.oneOf
         [ Fuzz.map days <| Fuzz.intRange 0 Random.maxInt
-        , Fuzz.map months <| Fuzz.intRange 0 1000
-        , Fuzz.map years <| Fuzz.intRange 0 40
+        , Fuzz.map2 months (Fuzz.intRange 0 1000) (Fuzz.constant stayInSameMonth)
+        , Fuzz.map2 years (Fuzz.intRange 0 40) (Fuzz.constant stayInSameMonth)
         ]
