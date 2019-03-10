@@ -93,6 +93,19 @@ all =
                         |> intoPast aDuration
                         |> Expect.equal aDate
             ]
+        , describe "collect"
+            [ test "5 days after 1 January is 2,3,4,5 and 6 January" <|
+                \() ->
+                    firstJanuary1970
+                        |> collect 5 (intoFuture (days 1))
+                        |> Expect.equalLists
+                            [ intoFuture (days 1) firstJanuary1970
+                            , intoFuture (days 2) firstJanuary1970
+                            , intoFuture (days 3) firstJanuary1970
+                            , intoFuture (days 4) firstJanuary1970
+                            , intoFuture (days 5) firstJanuary1970
+                            ]
+            ]
         ]
 
 

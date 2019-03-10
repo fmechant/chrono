@@ -2,6 +2,7 @@ module Chrono.Date exposing
     ( Date
     , Duration
     , Weekday(..)
+    , collect
     , days
     , fromJDN
     , fromMoment
@@ -231,6 +232,22 @@ last weekday date =
                 days diff
     in
     intoPast toMove date
+
+
+collect : Int -> (Date -> Date) -> Date -> List Date
+collect length toNext date =
+    let
+        collector =
+            \_ ( acc, currentDate ) ->
+                let
+                    nextDate =
+                        toNext currentDate
+                in
+                ( acc ++ [ nextDate ], nextDate )
+    in
+    List.repeat length 0
+        |> List.foldr collector ( [], date )
+        |> Tuple.first
 
 
 
