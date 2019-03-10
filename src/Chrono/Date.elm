@@ -10,7 +10,6 @@ module Chrono.Date exposing
     , last
     , next
     , toJDN
-    , toMoment
     , toNoon
     , toWeekday
     , toWeekdayNumber
@@ -85,13 +84,6 @@ fromMoment zone moment =
                 positiveJdn
     in
     JDN jdn
-
-
-{-| Convert the date and time, in this time zone, to the moment.
--}
-toMoment : TimeZone -> Time -> Date -> Moment
-toMoment zone time date =
-    Moment.fromMsSinceEpoch 0
 
 
 {-| Convert to the Julian Day Number.
