@@ -1,13 +1,18 @@
 module Chrono.Date exposing
     ( Date
+    , Duration
     , Weekday(..)
+    , days
     , fromJDN
     , fromMoment
+    , intoFuture
+    , intoPast
     , toJDN
     , toMoment
     , toNoon
     , toWeekday
     , toWeekdayNumber
+    , weeks
     )
 
 {-| A date is an abstract understanding of a period of time.
@@ -166,22 +171,63 @@ fromJDN jdn =
     JDN jdn
 
 
+
+---- Move dates ----
+
+
 {-| Move the date a number of days into the future.
-Negative numbers will move to the past.
 -}
-move : Int -> Date -> Date
-move numberOfDays (JDN date) =
+intoFuture : Duration -> Date -> Date
+intoFuture (Duration numberOfDays) (JDN date) =
     JDN (date + numberOfDays)
 
 
+{-| Move the date a number of days into the past.
+-}
+intoPast : Duration -> Date -> Date
+intoPast (Duration numberOfDays) date =
+    intoFuture (Duration -numberOfDays) date
 
 
 
+---- Duration ----
 
 
+{-| Duration represents a laps of time. It is represented in the date and time model,
+because we are thinking about actual elaps of specific days and/or weeks.
+-}
+type Duration
+    = Duration Int
 
 
+{-| A duration of a number of days.
+-}
+days : Int -> Duration
+days noOfDays =
+    Duration noOfDays
 
 
+{-| A duration of a number of weeks.
+-}
+weeks : Int -> Duration
+weeks noOfWeeks =
+    Duration <| noOfWeeks * 7
 
 
+{-| Combine two durations.
+
+It has an odd signiture to be able to efficiently use it using the pipe (|>) operator.
+Example:
+
+    weeks 2
+        |> and days 15
+    --> days 29
+
+-}
+and : (Int -> Duration) -> Int -> Duration -> Duration
+and fct value (Duration duration) =
+    let
+        (Duration toAdd) =
+            fct value
+    in
+    Duration (duration + toAdd)
