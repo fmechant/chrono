@@ -2,6 +2,7 @@ module Chrono.DateAndTime exposing
     ( DateAndTime
     , fromMoment
     , now
+    , toMoment
     )
 
 import Chrono.Date as Date exposing (Date)
@@ -27,6 +28,14 @@ fromMoment zone moment =
     { date = Date.fromMoment zone moment
     , time = Time.fromMoment zone moment
     }
+
+
+toMoment : TimeZone -> DateAndTime -> Moment
+toMoment zone { date, time } =
+    Date.toNoon zone date
+        |> Moment.toMsAfterEpoch
+        |> (+) (Time.toMsSinceNoon time)
+        |> Moment.fromMsSinceEpoch
 
 
 {-| Get the date and time at the moment when this task is run and in the time zone
