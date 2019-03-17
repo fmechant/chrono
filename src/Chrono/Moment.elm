@@ -84,15 +84,13 @@ intoPast (Duration durationInMs) (Moment momentInMs) =
 
     import List
 
-    base = fromMsSinceEpoch 0
-    later = intoFuture (minutes 5) base
-    earlier = intoPast (hours 20) base
-
-    chronologicalComparison base later
-    --> LT
-
-    List.sortWith chronologicalComparison [later, earlier, base]
-    --> [earlier, base, later]
+    let
+        base = fromMsSinceEpoch 0
+        later = intoFuture (minutes 5) base
+        earlier = intoPast (hours 20) base
+    in
+    [earlier, base, later] == List.sortWith chronologicalComparison [later, earlier, base]
+    --> True
 
 -}
 chronologicalComparison : Moment -> Moment -> Order
