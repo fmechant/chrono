@@ -3,6 +3,7 @@ module Chrono.GregorianCalendarTests exposing (all)
 import Chrono.Date as Date exposing (Date)
 import Chrono.GregorianCalendar exposing (..)
 import Chrono.Moment as Moment
+import Chrono.TestUtils exposing (..)
 import Expect
 import Fuzz
 import Random
@@ -80,17 +81,3 @@ firstJanuary2000 =
 twentyEightFebruary2000 : Date
 twentyEightFebruary2000 =
     Date.fromJDN (2451545 + 58)
-
-
-fuzzDate : Fuzz.Fuzzer Date
-fuzzDate =
-    Fuzz.map Date.fromJDN <| Fuzz.intRange 2415021 3415021
-
-
-fuzzDuration : Fuzz.Fuzzer Duration
-fuzzDuration =
-    Fuzz.oneOf
-        [ Fuzz.map days <| Fuzz.intRange 0 Random.maxInt
-        , Fuzz.map2 months (Fuzz.intRange 0 1000) (Fuzz.constant stayInSameMonth)
-        , Fuzz.map2 years (Fuzz.intRange 0 40) (Fuzz.constant stayInSameMonth)
-        ]
