@@ -3,14 +3,14 @@ module Chrono.GregorianCalendar exposing
     , Month(..)
     , andThen
     , days
-    , fromDayMonthYear
+    , fromGregorianDate
     , fromMonthNumber
     , intoFuture
     , intoPast
     , isLeapYear
     , months
     , stayInSameMonth
-    , toDayMonthYear
+    , toGregorianDate
     , toMonthNumber
     , years
     )
@@ -22,13 +22,26 @@ import Chrono.Date as Date exposing (Date)
 ---- Conversion
 
 
+{-| The date specified using the gregorian year, month and day.
+
+Use it with fromGregorianDate to conveniently create a date.
+
+Use the actual Date type to store, transmit, move, ... dates.
+
+-}
+type alias GregorianDate =
+    { year : Int, month : Month, day : Int }
+
+
 {-| Convert a year, month and day on the gregorian calendar to a date.
+
+Year, month and day combinations that are not actual gregorian dates, like 2019-04-31 give unpredictable results.
 
 It uses the algoritm described in <https://en.wikipedia.org/wiki/Julian_day>
 
 -}
-fromDayMonthYear : { day : Int, month : Month, year : Int } -> Date.Date
-fromDayMonthYear { day, month, year } =
+fromGregorianDate : GregorianDate -> Date
+fromGregorianDate { day, month, year } =
     let
         m =
             toMonthNumber month
@@ -37,9 +50,12 @@ fromDayMonthYear { day, month, year } =
 
 
 {-| Convert a date to the year, month and day on the gregorian calendar.
+
+This is typically used in the view to visualize the date.
+
 -}
-toDayMonthYear : Date -> { day : Int, month : Month, year : Int }
-toDayMonthYear date =
+toGregorianDate : Date -> GregorianDate
+toGregorianDate date =
     let
         j =
             Date.toJDN date
@@ -71,7 +87,7 @@ toDayMonthYear date =
 {-| When confronted with impossible dates, moves to the closest valid day in the same month.
 Typically used when defining a duration of months or years.
 -}
-stayInSameMonth : { day : Int, month : Month, year : Int } -> { day : Int, month : Month, year : Int }
+stayInSameMonth : GregorianDate -> GregorianDate
 stayInSameMonth dmy =
     let
         maxDay =
@@ -271,7 +287,7 @@ move item date =
         NumberOfMonths noMonths strategy ->
             let
                 dmy =
-                    toDayMonthYear date
+                    toGregorianDate date
 
                 monthsWithoutYears =
                     remainderBy 12 noMonths
@@ -292,7 +308,7 @@ move item date =
                     else
                         yearsDiffWhenPositieve
             in
-            fromDayMonthYear <|
+            fromGregorianDate <|
                 strategy
                     { day = dmy.day
                     , month = fromMonthNumber <| 1 + modBy 12 newMonthMinusOne
@@ -302,9 +318,9 @@ move item date =
         NumberOfYears noYears strategy ->
             let
                 dmy =
-                    toDayMonthYear date
+                    toGregorianDate date
             in
-            fromDayMonthYear <| strategy { day = dmy.day, month = dmy.month, year = dmy.year + noYears }
+            fromGregorianDate <| strategy { day = dmy.day, month = dmy.month, year = dmy.year + noYears }
 
 
 negate : DurationItem -> DurationItem

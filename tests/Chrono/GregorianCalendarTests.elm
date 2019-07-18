@@ -15,14 +15,14 @@ all : Test
 all =
     describe "Gregorian Calendar Tests"
         [ describe "conversions"
-            [ test "fromDayMonthYear of January 1, 2000 in utc is the correct date. " <|
+            [ test "fromGregorianDate of January 1, 2000 in utc is the correct date. " <|
                 \() ->
-                    fromDayMonthYear { year = 2000, month = January, day = 1 }
+                    fromGregorianDate { year = 2000, month = January, day = 1 }
                         |> Expect.equal firstJanuary2000
-            , test "toDayMonthYear returns the correct day, month and year. " <|
+            , test "toGregorianDate returns the correct day, month and year. " <|
                 \() ->
                     twentyEightFebruary2000
-                        |> toDayMonthYear
+                        |> toGregorianDate
                         |> Expect.equal { year = 2000, month = February, day = 28 }
             ]
         , describe "leap years"
@@ -58,17 +58,17 @@ all =
                 \() ->
                     twentyEightFebruary2000
                         |> intoFuture (days 3 |> andThen (months 3 stayInSameMonth))
-                        |> Expect.equal (fromDayMonthYear { day = 2, month = June, year = 2000 })
+                        |> Expect.equal (fromGregorianDate { day = 2, month = June, year = 2000 })
             , test "moving to 30 February stays in same month and becomes 28 February for common year" <|
                 \() ->
-                    fromDayMonthYear { day = 30, month = January, year = 2003 }
+                    fromGregorianDate { day = 30, month = January, year = 2003 }
                         |> intoFuture (months 1 stayInSameMonth)
-                        |> Expect.equal (fromDayMonthYear { day = 28, month = February, year = 2003 })
+                        |> Expect.equal (fromGregorianDate { day = 28, month = February, year = 2003 })
             , test "moving to 30 February stays in same month and becomes 29 February for leap year" <|
                 \() ->
-                    fromDayMonthYear { day = 30, month = January, year = 2004 }
+                    fromGregorianDate { day = 30, month = January, year = 2004 }
                         |> intoFuture (months 1 stayInSameMonth)
-                        |> Expect.equal (fromDayMonthYear { day = 29, month = February, year = 2004 })
+                        |> Expect.equal (fromGregorianDate { day = 29, month = February, year = 2004 })
             ]
         ]
 
