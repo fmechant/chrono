@@ -218,8 +218,8 @@ If it is unclear to you why it returns a Sub, please review the Elm architecture
 
 -}
 every : Duration -> (Moment -> msg) -> Sub msg
-every duration function =
-    Sub.none
+every (Duration duration) function =
+    CoreTime.every (toFloat duration) (CoreTime.posixToMillis >> fromMsSinceEpoch >> function)
 
 
 
