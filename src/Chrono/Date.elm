@@ -149,6 +149,8 @@ toWeekdayNumber weekday =
             7
 
 
+{-| Get the moment at noon of this date, in this time zone.
+-}
 toNoon : TimeZone -> Date -> Moment
 toNoon zone (JDN jdn) =
     let
@@ -184,8 +186,8 @@ intoPast (Duration numberOfDays) date =
     intoFuture (Duration -numberOfDays) date
 
 
-{-| Move the date into the future until the next day that is a specific weekday.
-If date is the weekday, it will move a week into the future.
+{-| Move the date into the future until that day is a specific weekday.
+If the date is the weekday, it will move a week into the future.
 -}
 next : Weekday -> Date -> Date
 next weekday date =
@@ -209,7 +211,7 @@ next weekday date =
     intoFuture toMove date
 
 
-{-| Move the date into the past until the previous day that is a specific weekday.
+{-| Move the date into the past until that day is a specific weekday.
 If date is the weekday, it will move a week into the past.
 -}
 last : Weekday -> Date -> Date
