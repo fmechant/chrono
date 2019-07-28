@@ -33,6 +33,16 @@ type alias GregorianDate =
     { year : Int, month : Month, day : Int }
 
 
+{-| The move strategy defines what to do if the move provides an invalid gregorian date.
+
+For example, what to do when 3 months are added to 2019-01-31?
+The strategy defines if the result is 2019-04-30 or 2019-05-01 or ...
+
+-}
+type alias MoveStrategy =
+    GregorianDate -> GregorianDate
+
+
 {-| Convert a year, month and day on the gregorian calendar to a date.
 
 Year, month and day combinations that are not actual gregorian dates, like 2019-04-31 give unpredictable results.
@@ -87,7 +97,7 @@ toGregorianDate date =
 {-| When confronted with impossible dates, moves to the closest valid day in the same month.
 Typically used when defining a duration of months or years.
 -}
-stayInSameMonth : GregorianDate -> GregorianDate
+stayInSameMonth : MoveStrategy
 stayInSameMonth dmy =
     let
         maxDay =
