@@ -125,6 +125,14 @@ all =
                         |> viewDuration
                         |> Expect.equal { days = someDays, weeks = someWeeks }
             ]
+        , describe "elapsed"
+            [ fuzz2 fuzzDate fuzzDateDuration "should return a duration that gives the date if we move it into the future" <|
+                \date duration ->
+                    date
+                        |> intoFuture duration
+                        |> elapsed date
+                        |> Expect.equal duration
+            ]
         ]
 
 

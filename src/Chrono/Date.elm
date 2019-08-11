@@ -5,6 +5,7 @@ module Chrono.Date exposing
     , and
     , collect
     , days
+    , elapsed
     , fromJDN
     , fromMoment
     , intoFuture
@@ -308,3 +309,14 @@ viewDuration (Duration totalDays) =
             totalDays // 7
     in
     { days = totalDays - numberOfWeeks * 7, weeks = numberOfWeeks }
+
+
+{-| How many days have elapsed between the dates.
+
+The result is a duration, without the indication whether one date is in the future
+or in the past regarding to the other date.
+
+-}
+elapsed : Date -> Date -> Duration
+elapsed (JDN from) (JDN to) =
+    days <| abs <| to - from

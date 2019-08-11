@@ -33,7 +33,7 @@ fuzzDuration =
 
 fuzzDateDuration : Fuzz.Fuzzer Date.Duration
 fuzzDateDuration =
-    Fuzz.map Date.days Fuzz.int
+    Fuzz.map Date.days (Fuzz.intRange 0 Random.maxInt)
 
 
 fuzzThursday : Fuzz.Fuzzer Date
