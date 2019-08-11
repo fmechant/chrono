@@ -1,17 +1,19 @@
 module Chrono.GregorianCalendar exposing
     ( Duration
     , Month(..)
+    , YearType(..)
     , andThen
     , days
     , fromGregorianDate
     , fromMonthNumber
     , intoFuture
     , intoPast
-    , isLeapYear
     , months
     , stayInSameMonth
     , toGregorianDate
     , toMonthNumber
+    , toYearType
+    , typeOfYear
     , years
     )
 
@@ -106,11 +108,31 @@ stayInSameMonth dmy =
     { day = clamp 1 maxDay dmy.day, month = dmy.month, year = dmy.year }
 
 
-{-| Is the given year a leap year.
+
+---- Type of Year
+
+
+type YearType
+    = CommonYear
+    | LeapYear
+
+
+{-| Is the given year a leap year or a common year.
 -}
-isLeapYear : Int -> Bool
-isLeapYear year =
-    (modBy 4 year == 0) && (modBy 100 year /= 0 || modBy 400 year == 0)
+typeOfYear : Int -> YearType
+typeOfYear year =
+    if (modBy 4 year == 0) && (modBy 100 year /= 0 || modBy 400 year == 0) then
+        LeapYear
+
+    else
+        CommonYear
+
+
+{-| What is the type of year of the date, common year of leap year?
+-}
+toYearType : Date -> YearType
+toYearType date =
+    toGregorianDate date |> .year |> typeOfYear
 
 
 
@@ -229,11 +251,12 @@ numberOfDaysInMonth month year =
             31
 
         February ->
-            if isLeapYear year then
-                29
+            case typeOfYear year of
+                LeapYear ->
+                    29
 
-            else
-                28
+                CommonYear ->
+                    28
 
         March ->
             31

@@ -28,20 +28,25 @@ all =
         , describe "leap years"
             [ test "2000 is a leap year" <|
                 \() ->
-                    isLeapYear 2000
-                        |> Expect.equal True
+                    typeOfYear 2000
+                        |> Expect.equal LeapYear
             , test "2017 is a common year" <|
                 \() ->
-                    isLeapYear 2017
-                        |> Expect.equal False
+                    typeOfYear 2017
+                        |> Expect.equal CommonYear
             , test "2100 is a common year" <|
                 \() ->
-                    isLeapYear 2100
-                        |> Expect.equal False
+                    typeOfYear 2100
+                        |> Expect.equal CommonYear
             , test "2400 is a leap year" <|
                 \() ->
-                    isLeapYear 2400
-                        |> Expect.equal True
+                    typeOfYear 2400
+                        |> Expect.equal LeapYear
+            , test "2019-05-06 is in a common year" <|
+                \() ->
+                    fromGregorianDate { year = 2019, month = May, day = 6 }
+                        |> toYearType
+                        |> Expect.equal CommonYear
             ]
         , describe "moving dates"
             [ test "into the future returns the correct date" <|
