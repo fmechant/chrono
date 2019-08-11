@@ -33,7 +33,7 @@ utc =
     TimeZone 0 []
 
 
-customZone : Int -> List { start : Int, offset : Int } -> TimeZone
+customZone : Int -> List Era -> TimeZone
 customZone =
     TimeZone
 

@@ -382,8 +382,8 @@ type Duration
 
 type DurationItem
     = NumberOfDays Int
-    | NumberOfMonths Int ({ day : Int, month : Month, year : Int } -> { day : Int, month : Month, year : Int })
-    | NumberOfYears Int ({ day : Int, month : Month, year : Int } -> { day : Int, month : Month, year : Int })
+    | NumberOfMonths Int MoveStrategy
+    | NumberOfYears Int MoveStrategy
 
 
 days : Int -> Duration
@@ -391,12 +391,12 @@ days value =
     Duration [ NumberOfDays value ]
 
 
-months : Int -> ({ day : Int, month : Month, year : Int } -> { day : Int, month : Month, year : Int }) -> Duration
+months : Int -> MoveStrategy -> Duration
 months value strategy =
     Duration [ NumberOfMonths value strategy ]
 
 
-years : Int -> ({ day : Int, month : Month, year : Int } -> { day : Int, month : Month, year : Int }) -> Duration
+years : Int -> MoveStrategy -> Duration
 years value strategy =
     Duration [ NumberOfYears value strategy ]
 
