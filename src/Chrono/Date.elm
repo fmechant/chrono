@@ -2,6 +2,7 @@ module Chrono.Date exposing
     ( Date
     , Duration
     , Weekday(..)
+    , and
     , collect
     , days
     , fromJDN
@@ -14,6 +15,7 @@ module Chrono.Date exposing
     , toNoon
     , toWeekday
     , toWeekdayNumber
+    , viewDuration
     , weeks
     )
 
@@ -294,3 +296,15 @@ and fct value (Duration duration) =
             fct value
     in
     Duration (duration + toAdd)
+
+
+{-| Show the duration split up in weeks and days.
+Typically used in the view.
+-}
+viewDuration : Duration -> { days : Int, weeks : Int }
+viewDuration (Duration totalDays) =
+    let
+        numberOfWeeks =
+            totalDays // 7
+    in
+    { days = totalDays - numberOfWeeks * 7, weeks = numberOfWeeks }

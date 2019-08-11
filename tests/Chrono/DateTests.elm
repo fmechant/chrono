@@ -107,6 +107,24 @@ all =
                             , intoFuture (days 5) firstJanuary1970
                             ]
             ]
+        , describe "view duration"
+            [ test "should show the correct number of days" <|
+                \() ->
+                    days 5
+                        |> viewDuration
+                        |> Expect.equal { days = 5, weeks = 0 }
+            , test "should show 1 week for 7 days" <|
+                \() ->
+                    days 7
+                        |> viewDuration
+                        |> Expect.equal { days = 0, weeks = 1 }
+            , fuzz2 (Fuzz.intRange 0 6) (Fuzz.intRange 0 10000) "should work out days and weeks" <|
+                \someDays someWeeks ->
+                    days someDays
+                        |> and weeks someWeeks
+                        |> viewDuration
+                        |> Expect.equal { days = someDays, weeks = someWeeks }
+            ]
         ]
 
 
