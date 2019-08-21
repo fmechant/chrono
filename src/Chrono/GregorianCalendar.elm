@@ -405,9 +405,9 @@ years value strategy =
 
 Example:
 
-    fromDayMonthYear { day = 1, month = January, year = 2000  }
+    fromGregorianDate { day = 1, month = January, year = 2000  }
         |> intoFuture (days 15 |> andThen (years 2 stayInSameMonth))
-    --> fromDayMonthYear { day = 16, month = January, year = 2002  }
+    --> fromGregorianDate { day = 16, month = January, year = 2002  }
 
 -}
 andThen : Duration -> Duration -> Duration
