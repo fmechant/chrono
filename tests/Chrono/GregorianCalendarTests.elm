@@ -59,7 +59,7 @@ all =
                     aDate
                         |> intoFuture (months 0 stayInSameMonth)
                         |> Expect.equal aDate
-            , test "takes the order of the duration into account" <|
+            , test "takes the order of the moves into account" <|
                 \() ->
                     twentyEightFebruary2000
                         |> intoFuture (days 3 |> andThen (months 3 stayInSameMonth))

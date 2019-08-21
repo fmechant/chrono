@@ -12,7 +12,7 @@ fuzzDate =
     Fuzz.map Date.fromJDN <| Fuzz.intRange 2415021 3415021
 
 
-fuzzCalDuration : Fuzz.Fuzzer Cal.Duration
+fuzzCalDuration : Fuzz.Fuzzer Cal.Moves
 fuzzCalDuration =
     Fuzz.oneOf
         [ Fuzz.map Cal.days <| Fuzz.intRange 0 Random.maxInt

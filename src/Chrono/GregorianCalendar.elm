@@ -1,6 +1,6 @@
 module Chrono.GregorianCalendar exposing
-    ( Duration
-    , Month(..)
+    ( Month(..)
+    , Moves
     , YearType(..)
     , andThen
     , days
@@ -295,22 +295,22 @@ numberOfDaysInMonth month year =
 
 {-| Move the date a duration into the future.
 -}
-intoFuture : Duration -> Date -> Date
-intoFuture (Duration durations) date =
-    durations
+intoFuture : Moves -> Date -> Date
+intoFuture (Moves moves) date =
+    moves
         |> List.foldl move date
 
 
 {-| Move the date a duration into the past.
 -}
-intoPast : Duration -> Date -> Date
-intoPast (Duration durations) date =
-    durations
+intoPast : Moves -> Date -> Date
+intoPast (Moves moves) date =
+    moves
         |> List.map negate
         |> List.foldl move date
 
 
-move : DurationItem -> Date -> Date
+move : Move -> Date -> Date
 move item date =
     case item of
         NumberOfDays noDays ->
@@ -356,7 +356,7 @@ move item date =
             fromGregorianDate <| strategy { day = dmy.day, month = dmy.month, year = dmy.year + noYears }
 
 
-negate : DurationItem -> DurationItem
+negate : Move -> Move
 negate item =
     case item of
         NumberOfDays value ->
@@ -370,38 +370,40 @@ negate item =
 
 
 
----- DURATION ----
+---- MOVES ----
 
 
-{-| Duration represents a laps of time. It is represented in the date and time model,
-because we are thinking about actual elaps of specific days, months and years.
+{-| Moves represents specific moves you want to make starting from a date.
+Moves is different from the Duration in Date or Moment, because it makes little
+sense here. How long is a Month? It depends. That is why we prefer here to use
+moves instead of a duration that depends on what date you start from.
 -}
-type Duration
-    = Duration (List DurationItem)
+type Moves
+    = Moves (List Move)
 
 
-type DurationItem
+type Move
     = NumberOfDays Int
     | NumberOfMonths Int MoveStrategy
     | NumberOfYears Int MoveStrategy
 
 
-days : Int -> Duration
+days : Int -> Moves
 days value =
-    Duration [ NumberOfDays value ]
+    Moves [ NumberOfDays value ]
 
 
-months : Int -> MoveStrategy -> Duration
+months : Int -> MoveStrategy -> Moves
 months value strategy =
-    Duration [ NumberOfMonths value strategy ]
+    Moves [ NumberOfMonths value strategy ]
 
 
-years : Int -> MoveStrategy -> Duration
+years : Int -> MoveStrategy -> Moves
 years value strategy =
-    Duration [ NumberOfYears value strategy ]
+    Moves [ NumberOfYears value strategy ]
 
 
-{-| Combine two durations.
+{-| Combine two moves.
 
 Example:
 
@@ -410,6 +412,7 @@ Example:
     --> fromGregorianDate { day = 16, month = January, year = 2002  }
 
 -}
-andThen : Duration -> Duration -> Duration
-andThen (Duration toAdd) (Duration durations) =
-    Duration (durations ++ toAdd)
+andThen : Moves -> Moves -> Moves
+andThen (Moves toAdd) (Moves moves) =
+    Moves (moves ++ toAdd)
+
