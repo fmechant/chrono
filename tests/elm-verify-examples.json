@@ -1,4 +1,4 @@
 {
-    "root": "../src",
-    "tests": ["Chrono.Moment", "./README.md"]
+  "root": "../src",
+  "tests": ["Chrono.Moment"]
 }

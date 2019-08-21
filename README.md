@@ -11,27 +11,67 @@ Instead of mixing the concepts of moments in time and date and times, we choose
 to make the distinction explicit.
 
 ### The Moment Model
+
 The moment model represents specific moments in time. For example the moment you
 first started reading this sentence.
 
 ### The Date and Time Model
+
 The date and time model represents the abstract concepts of date and time. For
 example New Years Day in 2019.
 
 ### Conversion Between Models
+
 To convert from one model to the other, we need a time zone. Everybody knows New
 Years is celebrated earlier in Europe than it is in America, for example.
 
 ### Example
+
 A good example of how to deal with preventing the mixture of concepts is when
 creating a recurrent meeting:
 Suppose we want to make a meeting recurrent for the next three weeks.
 Since a meeting is at a specific moment in time, its representation is a moment.
 Weeks is a concept of the date and time model. Here is how we do that using this
 library:
+
 1. get the date and time of the moment in the specific time zone
 2. get the dates and times fast forwarded a week three times
 3. convert the dates and times to moments in the specific time zone
+
+```elm
+import Chrono.Date as Date
+import Chrono.Time as Time
+import Chrono.TimeZone as TimeZone exposing (TimeZone)
+import Chrono.Moment exposing (Moment)
+import Chrono.DateAndTime as DateAndTime
+import Chrono.GregorianCalendar as Cal
+
+recurrent: Int -> Date.Duration -> TimeZone -> Moment -> List Moment
+recurrent times duration timeZone moment =
+    let
+        { date, time } = DateAndTime.fromMoment timeZone moment
+    in
+    date
+        |> Date.collect times duration
+        |> List.map (DateAndTime.withTime time)
+        |> List.map (DateAndTime.toMoment timeZone)
+
+{-| Brussels time goes to summer time on 31 March 2019.-}
+brusselsTimeZone : TimeZone
+brusselsTimeZone =
+    TimeZone.customZone 60 [{start = 1553994000000, offset = 120}]
+
+inBrussels : { day : Int, month : Cal.Month, year : Int, hour : Int, minute : Int } -> Moment
+inBrussels =
+    Cal.fromDayMonthYearHourMinute >> (DateAndTime.toMoment brusselsTimeZone)
+
+recurrent 3 (Date.weeks 1) brusselsTimeZone (inBrussels {day = 29, month = Cal.March, year = 2019, hour = 13, minute = 0})
+--> [
+-->    inBrussels {day = 5, month = Cal.April, year = 2019, hour = 13, minute = 0},
+-->    inBrussels {day = 12, month = Cal.April, year = 2019, hour = 13, minute = 0},
+-->    inBrussels {day = 19, month = Cal.April, year = 2019, hour = 13, minute = 0}
+--> ]
+```
 
 So, instead of mixing the concept, we explicitly use the correct models, so we have
 predictable results. Even when the weeks include a change of the time offset
@@ -45,17 +85,3 @@ he would be late, or early.
 
 We hope this library makes you think what it is exactly that you are trying to
 represent, and then use the relevant model, so subtle errors are avoided.
-
-
-## Examples
-
-TODO
-
-Here is an example of notifying the user 10 minutes before a scheduled meeting
-is about to happen:
-
-```elm
-shouldNotify : Time.Zone -> Moment -> Date             
-```
-
-
