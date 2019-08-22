@@ -1,19 +1,33 @@
 module Chrono.GregorianCalendar exposing
     ( Month(..)
     , Moves
+    , Ordinal(..)
     , YearType(..)
     , andThen
+    , andThenOnlyWhen
     , days
+    , first
     , fromGregorianDate
     , fromMonthNumber
+    , inMonth
     , intoFuture
     , intoPast
+    , last
+    , lastWeekday
     , months
+    , nextWeekday
+    , onlyWhen
+    , second
+    , secondToLast
     , stayInSameMonth
+    , third
+    , toDayInMonth
     , toGregorianDate
     , toMonthNumber
     , toYearType
+    , travel
     , typeOfYear
+    , weeks
     , years
     )
 
@@ -112,6 +126,8 @@ stayInSameMonth dmy =
 ---- Type of Year
 
 
+{-| The type of year, common or leap.
+-}
 type YearType
     = CommonYear
     | LeapYear
@@ -290,34 +306,121 @@ numberOfDaysInMonth month year =
 
 
 
----- Move ----
+---- Time Travel ----
 
 
-{-| Move the date a duration into the future.
+{-| Moves represents specific moves you want to make starting from a date.
+Moves is different from the Duration in Date or Moment, because a dureation makes little
+sense here. How long is a Month? It depends. That is why we prefer here to use
+moves instead of a duration that depends on what date you start from.
 -}
-intoFuture : Moves -> Date -> Date
-intoFuture (Moves moves) date =
+type Moves
+    = Moves (List Move)
+
+
+{-| The possible moves to make
+-}
+type Move
+    = ToFuture NominalMove
+    | ToPast NominalMove
+    | ToNextWeekDay Date.Weekday
+    | ToLastWeekDay Date.Weekday
+    | InMonth Ordinal Date.Weekday
+    | ToDayInMonth Int
+    | Predicate (Date -> Bool) Moves
+
+
+{-| Execute the time travel, as defined in the Moves, starting from the date.
+-}
+travel : Moves -> Date -> Date
+travel (Moves moves) date =
     moves
         |> List.foldl move date
 
 
-{-| Move the date a duration into the past.
+{-| Combine two moves.
+
+Example:
+
+    fromGregorianDate { day = 1, month = January, year = 2000  }
+        |> travel (intoFuture (days 15) |> andThen intoFuture (years 2 stayInSameMonth))
+    --> fromGregorianDate { day = 16, month = January, year = 2002  }
+
 -}
-intoPast : Moves -> Date -> Date
-intoPast (Moves moves) date =
-    moves
-        |> List.map negate
-        |> List.foldl move date
+andThen : (a -> Moves) -> a -> Moves -> Moves
+andThen fct value (Moves moves) =
+    let
+        (Moves movesToAppend) =
+            fct value
+    in
+    Moves (moves ++ movesToAppend)
 
 
+{-| Only perform the moves if the predicate for the date is valid.
+
+Example:
+
+    import Chrono.Date as Date
+
+    let
+        weekday = Date.Wednesday
+    in
+    fromGregorianDate { day = 5, month = January, year = 2000  }
+        |> travel (onlyWhen (\d -> Date.toWeekday d /= weekday) (nextWeekday weekday))
+    --> fromGregorianDate { day = 5, month = January, year = 2000  }
+
+-}
+onlyWhen : (Date -> Bool) -> Moves -> Moves
+onlyWhen fct movesIfTrue =
+    Moves [ Predicate fct movesIfTrue ]
+
+
+{-| Combination of andThen and onlyWhen.
+
+Example:
+
+    import Chrono.Date as Date
+
+    let
+        weekday = Date.Wednesday
+        moves =
+            toDayInMonth 1
+                |> andThenOnlyWhen (\d -> Date.toWeekday d /= weekday) (nextWeekday weekday)
+    in
+    fromGregorianDate { day = 27, month = March, year = 2000  }
+        |> travel moves
+    --> fromGregorianDate { day = 1, month = March, year = 2000  }
+
+-}
+andThenOnlyWhen : (Date -> Bool) -> Moves -> Moves -> Moves
+andThenOnlyWhen fct movesIfTrue (Moves moves) =
+    Moves (moves ++ [ Predicate fct movesIfTrue ])
+
+
+{-| Travel a single move from the date.
+-}
 move : Move -> Date -> Date
 move item date =
     case item of
-        NumberOfDays noDays ->
+        Predicate fct moveIfTrue ->
+            if fct date then
+                travel moveIfTrue date
+
+            else
+                date
+
+        ToPast nominalMove ->
+            move (ToFuture (reverse nominalMove)) date
+
+        ToFuture (NumberOfDays noDays) ->
             date
                 |> Date.intoFuture (Date.days noDays)
 
-        NumberOfMonths noMonths strategy ->
+        ToFuture (NumberOfWeeks noWeeks) ->
+            date
+                |> Date.intoFuture (Date.weeks noWeeks)
+
+        ToFuture (NumberOfMonths noMonths strategy) ->
             let
                 dmy =
                     toGregorianDate date
@@ -348,19 +451,139 @@ move item date =
                     , year = dmy.year + yearDiff + aPrioriYears
                     }
 
-        NumberOfYears noYears strategy ->
+        ToFuture (NumberOfYears noYears strategy) ->
             let
                 dmy =
                     toGregorianDate date
             in
             fromGregorianDate <| strategy { day = dmy.day, month = dmy.month, year = dmy.year + noYears }
 
+        ToNextWeekDay weekday ->
+            date
+                |> Date.next weekday
 
-negate : Move -> Move
-negate item =
+        ToLastWeekDay weekday ->
+            date
+                |> Date.last weekday
+
+        InMonth (Th th) weekday ->
+            let
+                moves =
+                    toDayInMonth 1
+                        |> andThenOnlyWhen (\d -> Date.toWeekday d /= weekday) (nextWeekday weekday)
+                        |> andThen intoFuture (weeks (th - 1))
+            in
+            travel moves date
+
+        InMonth (ThToLast th) weekday ->
+            let
+                moves =
+                    toDayInMonth 1
+                        |> andThen intoFuture (months 1 stayInSameMonth)
+                        |> andThen lastWeekday weekday
+                        |> andThen intoPast (weeks (th - 1))
+            in
+            travel moves date
+
+        ToDayInMonth day ->
+            let
+                dmy =
+                    toGregorianDate date
+
+                max =
+                    numberOfDaysInMonth dmy.month dmy.year
+
+                clampedDay =
+                    clamp 1 max day
+            in
+            fromGregorianDate { day = clampedDay, month = dmy.month, year = dmy.year }
+
+
+
+---- Nominal Moves ----
+
+
+{-| A Nominal Move is a number of days, weeks, months or years.
+When moving months or years, we need a Move Strategy. See MoveStrategy for more info.
+-}
+type NominalMove
+    = NumberOfDays Int
+    | NumberOfWeeks Int
+    | NumberOfMonths Int MoveStrategy
+    | NumberOfYears Int MoveStrategy
+
+
+{-| Moves that define a nominal move into the future.
+
+Example:
+
+    fromGregorianDate { day = 1, month = January, year = 2000  }
+        |> travel (intoFuture (days 15))
+    --> fromGregorianDate { day = 16, month = January, year = 2000  }
+
+-}
+intoFuture : NominalMove -> Moves
+intoFuture =
+    ToFuture >> List.singleton >> Moves
+
+
+{-| Moves that define a nominal move into the past.
+Example:
+
+    fromGregorianDate { day = 16, month = January, year = 2000  }
+        |> travel (intoPast (days 15))
+    --> fromGregorianDate { day = 1, month = January, year = 2000  }
+
+-}
+intoPast : NominalMove -> Moves
+intoPast =
+    ToPast >> List.singleton >> Moves
+
+
+{-| A nominal move of a certain number of days.
+It needs intoFuture or intoPast to actual enable time travel.
+-}
+days : Int -> NominalMove
+days value =
+    NumberOfDays value
+
+
+{-| A nominal move of a certain number of weeks.
+It needs intoFuture or intoPast to actual enable time travel.
+-}
+weeks : Int -> NominalMove
+weeks value =
+    NumberOfWeeks value
+
+
+{-| A nominal move of a certain number of months.
+See MoveStrategy to understand why it is needed.
+It needs intoFuture or intoPast to actual enable time travel.
+-}
+months : Int -> MoveStrategy -> NominalMove
+months value strategy =
+    NumberOfMonths value strategy
+
+
+{-| A nominal move of a certain number of years.
+See MoveStrategy to understand why it is needed.
+It needs intoFuture or intoPast to actual enable time travel.
+-}
+years : Int -> MoveStrategy -> NominalMove
+years value strategy =
+    NumberOfYears value strategy
+
+
+{-| Reverse the nominal move
+-}
+reverse : NominalMove -> NominalMove
+reverse item =
     case item of
         NumberOfDays value ->
             NumberOfDays -value
+
+        NumberOfWeeks value ->
+            NumberOfWeeks -value
 
         NumberOfMonths value strategy ->
             NumberOfMonths -value strategy
@@ -370,49 +593,121 @@ negate item =
 
 
 
----- MOVES ----
+---- Move Ordinally ----
 
 
-{-| Moves represents specific moves you want to make starting from a date.
-Moves is different from the Duration in Date or Moment, because it makes little
-sense here. How long is a Month? It depends. That is why we prefer here to use
-moves instead of a duration that depends on what date you start from.
--}
-type Moves
-    = Moves (List Move)
+{-| Moves that define a move to the next day that is the weekday.
+It always moves into the future.
 
-
-type Move
-    = NumberOfDays Int
-    | NumberOfMonths Int MoveStrategy
-    | NumberOfYears Int MoveStrategy
-
-
-days : Int -> Moves
-days value =
-    Moves [ NumberOfDays value ]
-
-
-months : Int -> MoveStrategy -> Moves
-months value strategy =
-    Moves [ NumberOfMonths value strategy ]
-
-
-years : Int -> MoveStrategy -> Moves
-years value strategy =
-    Moves [ NumberOfYears value strategy ]
-
-
-{-| Combine two moves.
+See onlyWhen for deciding to not move if the day is already a weekday.
 
 Example:
 
-    fromGregorianDate { day = 1, month = January, year = 2000  }
-        |> intoFuture (days 15 |> andThen (years 2 stayInSameMonth))
-    --> fromGregorianDate { day = 16, month = January, year = 2002  }
+    import Chrono.Date as Date
+
+    fromGregorianDate { day = 1, month = January, year = 2000 }
+        |> travel (nextWeekday Date.Wednesday)
+    --> fromGregorianDate { day = 5, month = January, year = 2000 }
 
 -}
-andThen : Moves -> Moves -> Moves
-andThen (Moves toAdd) (Moves moves) =
-    Moves (moves ++ toAdd)
+nextWeekday : Date.Weekday -> Moves
+nextWeekday =
+    ToNextWeekDay >> List.singleton >> Moves
 
+
+{-| Moves that define a move to the last day that is the weekday.
+It always moves into the past.
+
+See onlyWhen for deciding to not move if the day is already a weekday.
+
+Example:
+
+    import Chrono.Date as Date
+
+    fromGregorianDate { day = 8, month = January, year = 2000 }
+        |> travel (lastWeekday Date.Wednesday)
+    --> fromGregorianDate { day = 5, month = January, year = 2000 }
+
+-}
+lastWeekday : Date.Weekday -> Moves
+lastWeekday =
+    ToLastWeekDay >> List.singleton >> Moves
+
+
+{-| Moves that define a move to a specific day in the current month.
+The day is clamped so that it is a valid day in the month.
+
+Example:
+
+    fromGregorianDate { day = 8, month = January, year = 2000 }
+        |> travel (toDayInMonth 15)
+    --> fromGregorianDate { day = 15, month = January, year = 2000 }
+
+-}
+toDayInMonth : Int -> Moves
+toDayInMonth =
+    ToDayInMonth >> List.singleton >> Moves
+
+
+{-| Moves that define a move to a specific weekday in the current month.
+
+Example:
+
+    import Chrono.Date as Date
+
+    fromGregorianDate { day = 8, month = January, year = 2000 }
+        |> travel (inMonth second Date.Wednesday)
+    --> fromGregorianDate { day = 12, month = January, year = 2000 }
+
+-}
+inMonth : Ordinal -> Date.Weekday -> Moves
+inMonth ordinal weekday =
+    Moves [ InMonth ordinal weekday ]
+
+
+{-| An ordinal. Can be the 1st, 2nd, 3rd, 4th, ... or the last, the second to last, ...
+-}
+type Ordinal
+    = Th Int
+    | ThToLast Int
+
+
+{-| The ordinal for the first occurence
+-}
+first : Ordinal
+first =
+    Th 1
+
+
+{-| The ordinal for the second occurence
+-}
+second : Ordinal
+second =
+    Th 2
+
+
+{-| The ordinal for the third occurence.
+
+Higher that this, use the Th constructor, like in fifth = Th 5.
+
+-}
+third : Ordinal
+third =
+    Th 3
+
+
+{-| The ordinal for the last occurence.
+-}
+last : Ordinal
+last =
+    ThToLast 1
+
+
+{-| The ordinal for the second to last occurence.
+
+Higher that this, use the ThToLast constructor, like in fifthToLost = ThToLast 5.
+
+-}
+secondToLast : Ordinal
+secondToLast =
+    ThToLast 2
