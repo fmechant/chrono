@@ -489,14 +489,8 @@ move item date =
             let
                 dmy =
                     toGregorianDate date
-
-                max =
-                    numberOfDaysInMonth dmy.month dmy.year
-
-                clampedDay =
-                    clamp 1 max day
             in
-            fromGregorianDate { day = clampedDay, month = dmy.month, year = dmy.year }
+            fromGregorianDate <| stayInSameMonth { day = day, month = dmy.month, year = dmy.year }
 
 
 
