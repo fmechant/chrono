@@ -96,6 +96,13 @@ all =
                             |> travel (intoFuture (years numberOfYears stayInSameMonth))
                             |> Expect.equal (fromGregorianDate { year = aYear + numberOfYears, month = aMonth, day = aDay })
                 ]
+            , describe "traveling into the past" <|
+                [ fuzz2 (Fuzz.intRange 1 31) (Fuzz.intRange 1900 2100) "moving a month into the past in January goes to the year before" <|
+                    \aDay aYear ->
+                        fromGregorianDate { year = aYear, month = January, day = aDay }
+                            |> travel (intoPast (months 1 stayInSameMonth))
+                            |> Expect.equal (fromGregorianDate { year = aYear - 1, month = December, day = aDay })
+                ]
             , fuzz2 fuzzDate (Fuzz.intRange 0 1000) "traveling weeks into the past and then back into future returns to the same date" <|
                 \aDate numberOfWeeks ->
                     let
