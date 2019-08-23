@@ -140,6 +140,37 @@ all =
                             |> travel (toDayInMonth 31)
                             |> Expect.equal (fromGregorianDate { day = 29, month = February, year = 2000 })
                 ]
+            , describe "only when"
+                [ fuzz2 fuzzDate (Fuzz.intRange 1 100) "only when should stay in present when predicate returns false" <|
+                    \aDate numberOfWeeks ->
+                        aDate
+                            |> travel (onlyWhen (\_ -> False) (intoFuture (weeks numberOfWeeks)))
+                            |> Expect.equal aDate
+                , fuzz2 fuzzDate (Fuzz.intRange 1 100) "only when should move when predicate returns true" <|
+                    \aDate numberOfWeeks ->
+                        aDate
+                            |> travel
+                                (onlyWhen (\_ -> True) (intoFuture (weeks numberOfWeeks))
+                                    |> andThen intoPast (weeks numberOfWeeks)
+                                )
+                            |> Expect.equal aDate
+                , fuzz2 fuzzDate (Fuzz.intRange 1 100) "and then only when should stay in present when predicate returns false" <|
+                    \aDate numberOfWeeks ->
+                        aDate
+                            |> travel
+                                (intoFuture (weeks 0)
+                                    |> andThenOnlyWhen (\_ -> False) (intoPast (weeks numberOfWeeks))
+                                )
+                            |> Expect.equal aDate
+                , fuzz2 fuzzDate (Fuzz.intRange 1 100) "and then only when should move when predicate returns true" <|
+                    \aDate numberOfWeeks ->
+                        aDate
+                            |> travel
+                                (intoFuture (weeks numberOfWeeks)
+                                    |> andThenOnlyWhen (\_ -> True) (intoPast (weeks numberOfWeeks))
+                                )
+                            |> Expect.equal aDate
+                ]
             ]
         ]
 
