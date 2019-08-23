@@ -55,6 +55,11 @@ all =
                         firstJanuary2000
                             |> travel (intoFuture (days 58))
                             |> Expect.equal twentyEightFebruary2000
+                , fuzz2 fuzzDate (Fuzz.intRange 1 100) "moving weeks into the future goes 7 times that in days forward" <|
+                    \aDate numberOfWeeks ->
+                        aDate
+                            |> travel (intoFuture (weeks numberOfWeeks))
+                            |> Expect.equal (Date.intoFuture (Date.days (7 * numberOfWeeks)) aDate)
                 , fuzz fuzzDate "0 months in the future is the same date" <|
                     \aDate ->
                         aDate
