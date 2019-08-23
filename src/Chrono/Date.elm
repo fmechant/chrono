@@ -47,18 +47,6 @@ type Date
     = JDN Int
 
 
-{-| A weekday.
--}
-type Weekday
-    = Monday
-    | Tuesday
-    | Wednesday
-    | Thursday
-    | Friday
-    | Saterday
-    | Sunday
-
-
 {-| Get the date at the moment when this task is run and in the time zone
 where this task is run.
 -}
@@ -66,6 +54,21 @@ today : Task x Date
 today =
     Task.map2 fromMoment (Task.map TimeZone.withSameOffset CoreTime.here) <|
         Task.map (Moment.fromMsSinceEpoch << CoreTime.posixToMillis) CoreTime.now
+
+
+{-| Create the date that corresponds to the Julian Day Number.
+Can be used by a calendar to create the correct date.
+-}
+fromJDN : Int -> Date
+fromJDN =
+    JDN
+
+
+{-| Convert to the Julian Day Number.
+-}
+toJDN : Date -> Int
+toJDN (JDN jdn) =
+    jdn
 
 
 {-| Find out the date at this moment, in this time zone.
@@ -90,11 +93,31 @@ fromMoment zone moment =
     JDN jdn
 
 
-{-| Convert to the Julian Day Number.
+{-| Get the moment at noon of this date, in this time zone.
 -}
-toJDN : Date -> Int
-toJDN (JDN jdn) =
-    jdn
+toNoon : TimeZone -> Date -> Moment
+toNoon zone (JDN jdn) =
+    let
+        noonInUtc =
+            Moment.fromMsSinceEpoch <| (jdn - 2440588) * 86400000 + 43200000
+    in
+    Moment.intoPastForZone zone noonInUtc
+
+
+
+---- Weekday
+
+
+{-| A weekday.
+-}
+type Weekday
+    = Monday
+    | Tuesday
+    | Wednesday
+    | Thursday
+    | Friday
+    | Saterday
+    | Sunday
 
 
 {-| What day of the week is it?
@@ -150,25 +173,6 @@ toWeekdayNumber weekday =
 
         Sunday ->
             7
-
-
-{-| Get the moment at noon of this date, in this time zone.
--}
-toNoon : TimeZone -> Date -> Moment
-toNoon zone (JDN jdn) =
-    let
-        noonInUtc =
-            Moment.fromMsSinceEpoch <| (jdn - 2440588) * 86400000 + 43200000
-    in
-    Moment.intoPastForZone zone noonInUtc
-
-
-{-| Create the date that corresponds to the Julian Day Number.
-Can be used by a calendar to create the correct date.
--}
-fromJDN : Int -> Date
-fromJDN jdn =
-    JDN jdn
 
 
 
