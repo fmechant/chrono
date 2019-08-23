@@ -1,5 +1,6 @@
 module Chrono.GregorianCalendar exposing
     ( Month(..)
+    , MoveStrategy
     , Moves
     , Ordinal(..)
     , YearType(..)
