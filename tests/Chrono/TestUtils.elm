@@ -1,4 +1,12 @@
-module Chrono.TestUtils exposing (fuzzDate, fuzzDateDuration, fuzzDuration, fuzzMoment, fuzzThursday)
+module Chrono.TestUtils exposing
+    ( fuzzDate
+    , fuzzDateDuration
+    , fuzzDuration
+    , fuzzMoment
+    , fuzzMonth
+    , fuzzThursday
+    , fuzzYear
+    )
 
 import Chrono.Date as Date exposing (Date)
 import Chrono.GregorianCalendar as Cal
@@ -30,3 +38,13 @@ fuzzDateDuration =
 fuzzThursday : Fuzz.Fuzzer Date
 fuzzThursday =
     Fuzz.map (\i -> Date.fromJDN ((i // 7) * 7 + 3)) Fuzz.int
+
+
+fuzzMonth : Fuzz.Fuzzer Cal.Month
+fuzzMonth =
+    Fuzz.map Cal.fromMonthNumber (Fuzz.intRange 1 12)
+
+
+fuzzYear : Fuzz.Fuzzer Int
+fuzzYear =
+    Fuzz.intRange 1900 2100

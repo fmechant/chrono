@@ -85,6 +85,11 @@ all =
                         fromGregorianDate { day = 30, month = January, year = 2004 }
                             |> travel (intoFuture (months 1 stayInSameMonth))
                             |> Expect.equal (fromGregorianDate { day = 29, month = February, year = 2004 })
+                , test "moving months into the next year changes the year" <|
+                    \() ->
+                        fromGregorianDate { day = 14, month = October, year = 2005 }
+                            |> travel (intoFuture (months 5 stayInSameMonth))
+                            |> Expect.equal (fromGregorianDate { day = 14, month = March, year = 2006 })
                 ]
             , fuzz2 fuzzDate (Fuzz.intRange 0 1000) "traveling weeks into the past and then back into future returns to the same date" <|
                 \aDate numberOfWeeks ->
