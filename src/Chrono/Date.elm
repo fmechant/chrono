@@ -3,6 +3,7 @@ module Chrono.Date exposing
     , Duration
     , Weekday(..)
     , and
+    , chronologicalComparison
     , collect
     , days
     , elapsed
@@ -102,6 +103,26 @@ toNoon zone (JDN jdn) =
             Moment.fromMsSinceEpoch <| (jdn - 2440588) * 86400000 + 43200000
     in
     Moment.intoPastForZone zone noonInUtc
+
+
+{-| Compare two dates chronologically. Typically used with `List.sortWith`.
+
+Example:
+
+    import List
+
+    let
+        base = fromJDN 0
+        later = intoFuture (days 5) base
+        earlier = intoPast (days 20) base
+    in
+    [earlier, base, later] == List.sortWith chronologicalComparison [later, earlier, base]
+    --> True
+
+-}
+chronologicalComparison : Date -> Date -> Order
+chronologicalComparison (JDN d) (JDN e) =
+    compare d e
 
 
 

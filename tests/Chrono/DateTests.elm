@@ -133,6 +133,18 @@ all =
                         |> elapsed date
                         |> Expect.equal duration
             ]
+        , fuzz3 fuzzDate (Fuzz.intRange 1 10) (Fuzz.intRange 1 10) "chronological comparison" <|
+            \date daysEarlier daysLater ->
+                let
+                    earlier =
+                        intoPast (days daysEarlier) date
+
+                    later =
+                        intoFuture (days daysLater) date
+                in
+                [ later, earlier, date ]
+                    |> List.sortWith chronologicalComparison
+                    |> Expect.equal [ earlier, date, later ]
         ]
 
 
