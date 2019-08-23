@@ -112,7 +112,16 @@ toGregorianDate date =
 
 
 {-| When confronted with impossible dates, moves to the closest valid day in the same month.
+It always returns a valid GregorianDate.
+
 Typically used when defining a duration of months or years.
+
+Example:
+
+    { day = 50, month = January, year = 2000  }
+        |> stayInSameMonth
+    --> { day = 31, month = January, year = 2000  }
+
 -}
 stayInSameMonth : MoveStrategy
 stayInSameMonth dmy =
@@ -311,9 +320,12 @@ numberOfDaysInMonth month year =
 
 
 {-| Moves represents specific moves you want to make starting from a date.
-Moves is different from the Duration in Date or Moment, because a dureation makes little
+Moves is different from the Duration in Date or Moment, because a duration makes little
 sense here. How long is a Month? It depends. That is why we prefer here to use
 moves instead of a duration that depends on what date you start from.
+
+The order of the moves matter. There is no associativity here.
+
 -}
 type Moves
     = Moves (List Move)
@@ -536,7 +548,7 @@ intoPast =
 
 
 {-| A nominal move of a certain number of days.
-It needs intoFuture or intoPast to actual enable time travel.
+It needs intoFuture or intoPast to actually enable time travel.
 -}
 days : Int -> NominalMove
 days value =
@@ -544,7 +556,7 @@ days value =
 
 
 {-| A nominal move of a certain number of weeks.
-It needs intoFuture or intoPast to actual enable time travel.
+It needs intoFuture or intoPast to actually enable time travel.
 -}
 weeks : Int -> NominalMove
 weeks value =
@@ -553,7 +565,7 @@ weeks value =
 
 {-| A nominal move of a certain number of months.
 See MoveStrategy to understand why it is needed.
-It needs intoFuture or intoPast to actual enable time travel.
+It needs intoFuture or intoPast to actually enable time travel.
 -}
 months : Int -> MoveStrategy -> NominalMove
 months value strategy =
@@ -594,7 +606,7 @@ reverse item =
 {-| Moves that define a move to the next day that is the weekday.
 It always moves into the future.
 
-See onlyWhen for deciding to not move if the day is already a weekday.
+See onlyWhen for deciding to not move if the day is already the weekday.
 
 Example:
 
@@ -700,7 +712,7 @@ last =
 
 {-| The ordinal for the second to last occurence.
 
-Higher that this, use the ThToLast constructor, like in fifthToLost = ThToLast 5.
+Higher that this, use the ThToLast constructor, like in fifthToLast = ThToLast 5.
 
 -}
 secondToLast : Ordinal
