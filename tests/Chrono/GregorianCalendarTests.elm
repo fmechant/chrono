@@ -90,6 +90,11 @@ all =
                         fromGregorianDate { day = 14, month = October, year = 2005 }
                             |> travel (intoFuture (months 5 stayInSameMonth))
                             |> Expect.equal (fromGregorianDate { day = 14, month = March, year = 2006 })
+                , fuzz3 (Fuzz.intRange 1 28) fuzzMonth (Fuzz.tuple ( fuzzYear, Fuzz.intRange 1 100 )) "moving years" <|
+                    \aDay aMonth ( aYear, numberOfYears ) ->
+                        fromGregorianDate { year = aYear, month = aMonth, day = aDay }
+                            |> travel (intoFuture (years numberOfYears stayInSameMonth))
+                            |> Expect.equal (fromGregorianDate { year = aYear + numberOfYears, month = aMonth, day = aDay })
                 ]
             , fuzz2 fuzzDate (Fuzz.intRange 0 1000) "traveling weeks into the past and then back into future returns to the same date" <|
                 \aDate numberOfWeeks ->
