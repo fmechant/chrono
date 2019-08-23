@@ -137,7 +137,7 @@ Most problems do not need milliseconds.
 -}
 ms : Time -> Int -> Time
 ms (Time time) value =
-    Time <| (time // 1000) * 1000 + clamp 0 1000 value
+    Time <| (time // 60000) * 60000 + clamp 0 60000 value
 
 
 {-| Get the time for noon.
