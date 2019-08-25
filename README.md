@@ -1,31 +1,46 @@
-# Crono
+# Working with dates, times and moments in time
 
-Work with moments in time, dates and times of day in Elm.
+When you want to work with dates and time, you realize that it is surprisingly complex. You need to learn about time zones and posix time and calendars, but you only simply want to use a Date.
+This library aspires to allow you to work with dates and times, preventing you from making mistakes without having to know all the intrinsics about the Date/Time problems.
 
-## Motivation
+# Things to knows
 
-Working accurately with dates and times is surprisingly complex.
-This package does not hide the complexity, but makes it easier to work with.
+Still, there are things you should be aware of to be able to work with dates and times effectively. Two concepts to know about.
 
-Instead of mixing the concepts of moments in time and date and times, we choose
-to make the distinction explicit.
+## Moments in time
 
-### The Moment Model
+The first concept is moments in time. What [elm/time][coretime] calls `Posix` and what [Abseil][abseil] calls _Absolute Time_. It is the moment in time that something happened.
+To improve understanding, let's look at the moment of time Neil Armstrong first set foot on the moon. If we look at [wikipedia][wikiapollo], it says that happened on
+July 21, 1969 at 02:56 UTC. When viewing live in Europe, you could have seen that on July 21 at 04:56. In New York, that would have been on July 20 at 22:56. Remark that even the date is different.
+To be able to represent a moment in time, we pick a moment in the past, and work relative from that.
 
-The moment model represents specific moments in time. For example the moment you
-first started reading this sentence.
+[coretime]: https://package.elm-lang.org/packages/elm/time/latest
+[abseil]: https://abseil.io/docs/cpp/guides/time
+[wikiapollo]: https://en.wikipedia.org/wiki/Apollo_11
 
-### The Date and Time Model
+## Date and Time
 
-The date and time model represents the abstract concepts of date and time. For
-example New Years Day in 2019.
+The second concept is dates and times. What [elm/time][coretime] calls _Human Time_ and what [Abseil][abseil] calls _Civil Time_. A specific date is an abstract concept that is not directly linked to a moment in time.
+To improve understanding, let's look at the celebration of New Year 2020. In the diagram, we see at what moments in time New Year is celebrated.
 
-### Conversion Between Models
+TODO: Add diagram of new years in moments of time
 
-To convert from one model to the other, we need a time zone. Everybody knows New
-Years is celebrated earlier in Europe than it is in America, for example.
+In this library, we depart from most other Time libraries, in that we consider a Date as a specific concept, irrelative of moments in time. We avoid using UTC to mix the concepts.
+To be able to represent a date, we pick a date in the past, and work relative from that.
 
-### Example
+## Conversion
+
+Although there is some correlation with moments in time and date and time, we can clearly see it is not a simple relationship. To convert from a moment in time to a date and time, we need a timezone. That is why usually UTC is used to 'fix' the conversion problem, but we believe it creates more problems than it solved.
+
+# Examples
+
+TODO: create some simple example for using the library for things that users need all the time
+
+## A Date Selector
+
+TODO
+
+## A Recurrent Meeting
 
 A good example of how to deal with preventing the mixture of concepts is when
 creating a recurrent meeting:
@@ -76,7 +91,7 @@ recurrent 3 (Date.weeks 1) brusselsTimeZone (inBrussels {day = 29, month = Cal.M
 So, instead of mixing the concept, we explicitly use the correct models, so we have
 predictable results. Even when the weeks include a change of the time offset
 (daylight savings time).
-If we were to naively add 7 * 24 * 60 * 60 * 1000 ms to the moment, we introduced
+If we were to naively add 7 _ 24 _ 60 _ 60 _ 1000 ms to the moment, we introduced
 an error when the time offset changes. Intuitively, if we fast forward a meeting
 a week, we want the hour to stay the same.
 If we were to represent the meeting in a date and time, we again introduced an error,
