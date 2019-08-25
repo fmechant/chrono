@@ -3,7 +3,7 @@
 When you want to work with dates and time, you realize that it is surprisingly complex. You need to learn about time zones and posix time and calendars, but you only simply want to use a Date.
 This library aspires to allow you to work with dates and times, preventing you from making mistakes without having to know all the intrinsics about the Date/Time problems.
 
-# Things to knows
+# Things to know
 
 Still, there are things you should be aware of to be able to work with dates and times effectively. Two concepts to know about.
 
