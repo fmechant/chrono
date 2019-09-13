@@ -264,6 +264,18 @@ last weekday date =
     intoPast toMove date
 
 
+{-| Collect a list of dates, starting from a date and making a number of jumps.
+Combine this with GregorianCalendar.travel for more interesting collects.
+
+Example: Collect the next three Sundays after November 24, 4714 BC, in the proleptic Gregorian calendar
+
+    let
+        base = fromJDN 0
+    in
+    collect 3 (next Sunday) base
+    --> [fromJDN 6, fromJDN 13, fromJDN 20]
+
+-}
 collect : Int -> (Date -> Date) -> Date -> List Date
 collect length toNext date =
     let

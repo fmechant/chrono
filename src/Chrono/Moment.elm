@@ -98,24 +98,6 @@ chronologicalComparison (Moment m) (Moment n) =
     Basics.compare m n
 
 
-intoFutureForZone : TimeZone -> Moment -> Moment
-intoFutureForZone zone moment =
-    let
-        ms =
-            toMsAfterEpoch moment
-    in
-    fromMsSinceEpoch (ms + TimeZone.relevantOffset zone ms)
-
-
-intoPastForZone : TimeZone -> Moment -> Moment
-intoPastForZone zone moment =
-    let
-        ms =
-            toMsAfterEpoch moment
-    in
-    fromMsSinceEpoch (ms - TimeZone.relevantOffset zone ms)
-
-
 
 ---- DURATION ----
 
@@ -235,3 +217,25 @@ substractWhole value factor =
             value // factor
     in
     ( whole, value - whole * factor )
+
+
+{-| Don't use this. Only useful for internal calculations in Date and Time.
+-}
+intoFutureForZone : TimeZone -> Moment -> Moment
+intoFutureForZone zone moment =
+    let
+        ms =
+            toMsAfterEpoch moment
+    in
+    fromMsSinceEpoch (ms + TimeZone.relevantOffset zone ms)
+
+
+{-| Don't use this. Only useful for internal calculations in Date and Time.
+-}
+intoPastForZone : TimeZone -> Moment -> Moment
+intoPastForZone zone moment =
+    let
+        ms =
+            toMsAfterEpoch moment
+    in
+    fromMsSinceEpoch (ms - TimeZone.relevantOffset zone ms)

@@ -31,6 +31,8 @@ fromMoment zone moment =
     }
 
 
+{-| Get the moment of this date and time in this time zone.
+-}
 toMoment : TimeZone -> DateAndTime -> Moment
 toMoment zone { date, time } =
     Date.toNoon zone date

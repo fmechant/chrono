@@ -114,7 +114,7 @@ toGregorianDate date =
 {-| When confronted with impossible dates, moves to the closest valid day in the same month.
 It always returns a valid GregorianDate.
 
-Typically used when defining a duration of months or years.
+Typically used when defining a move of months or years.
 
 Example:
 

@@ -41,6 +41,8 @@ type Hour
     = Hour Int
 
 
+{-| Get the time for this moment in this time zone.
+-}
 fromMoment : TimeZone -> Moment -> Time
 fromMoment zone moment =
     Time <|
@@ -48,6 +50,8 @@ fromMoment zone moment =
             - 43200000
 
 
+{-| Get the milliseconds since noon.
+-}
 toMsSinceNoon : Time -> Int
 toMsSinceNoon (Time milliseconds) =
     milliseconds
@@ -222,6 +226,11 @@ to12Hours hours24 =
     ( hour12Corrected, meridiem )
 
 
+{-| View the time split up in hours, minutes, seconds and milliseconds.
+
+Use to12Hours additionally if you want the hours in AM/PM format.
+
+-}
 viewTime : Time -> { hour24 : Int, minute : Int, second : Int, millisecond : Int }
 viewTime (Time time) =
     let
