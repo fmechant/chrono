@@ -1,4 +1,9 @@
 {
   "root": "../src",
-  "tests": ["Chrono.Moment", "Chrono.Date", "Chrono.GregorianCalendar"]
+  "tests": [
+    "Chrono.Moment",
+    "Chrono.Date",
+    "Chrono.Time",
+    "Chrono.GregorianCalendar"
+  ]
 }

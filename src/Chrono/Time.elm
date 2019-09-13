@@ -1,7 +1,9 @@
 module Chrono.Time exposing
     ( Hour
+    , Meridiem(..)
     , Time
     , am
+    , chronologicalComparison
     , fromMoment
     , h24
     , m
@@ -9,7 +11,9 @@ module Chrono.Time exposing
     , ms
     , noon
     , pm
+    , to12Hours
     , toMsSinceNoon
+    , viewTime
     )
 
 {-| A specific time of the day.
@@ -58,7 +62,9 @@ Values below 1 are considered as 1, values above 12 are considered as 12.
 
 Example:
 
-    am 7 |> m 15 -- 7:15:00,000
+    am 7 |> m 15 -- 07:15:00,000
+        |> viewTime
+    --> {hour24 = 7, minute = 15, second = 0, millisecond = 0}
 
 -}
 am : Int -> Hour
@@ -76,6 +82,8 @@ Values below 1 are considered as 1, values above 12 are considered as 12.
 Example:
 
     pm 7 |> m 15 -- 19:15:00,000
+        |> viewTime
+    --> {hour24 = 19, minute = 15, second = 0, millisecond = 0}
 
 -}
 pm : Int -> Hour
@@ -106,6 +114,8 @@ Values below 0 are considered as 0, values above 23 are considered as 23.
 Example:
 
     h24 19 |> m 15 -- 19:15:00,000
+        |> viewTime
+    --> {hour24 = 19, minute = 15, second = 0, millisecond = 0}
 
 -}
 h24 : Int -> Hour
@@ -118,6 +128,8 @@ h24 value =
 Example:
 
     am 7 |> m 15 -- 7:15:00,000
+        |> viewTime
+    --> {hour24 = 7, minute = 15, second = 0, millisecond = 0}
 
 -}
 m : Int -> Hour -> Time
@@ -129,15 +141,15 @@ m value (Hour hour) =
 The previous value of milliseconds is overridden.
 So:
 
-    (h24 2 |> m 5 |> ms 100) |> ms 45 --> h24 2 |> m 5 |> ms 45
+    (h24 13 |> m 5 |> ms 100) |> ms 45 --> h24 13 |> m 5 |> ms 45
 
 We opted for this solution so it is not necessary to use ms, if you do not need it.
 Most problems do not need milliseconds.
 
 -}
-ms : Time -> Int -> Time
-ms (Time time) value =
-    Time <| (time // 60000) * 60000 + clamp 0 60000 value
+ms : Int -> Time -> Time
+ms value (Time time) =
+    Time <| floor (toFloat time / 60000) * 60000 + clamp 0 60000 value
 
 
 {-| Get the time for noon.
@@ -152,3 +164,96 @@ noon =
 midnight : Time
 midnight =
     Time (-12 * 3600000)
+
+
+{-| Compare two times chronologically. Typically used with `List.sortWith`.
+
+    import List
+
+    let
+        base = noon
+        later = h24 14 |> m 0
+        earlier = h24 3 |> m 30
+    in
+    [earlier, base, later] == List.sortWith chronologicalComparison [later, earlier, base]
+    --> True
+
+-}
+chronologicalComparison : Time -> Time -> Order
+chronologicalComparison (Time t) (Time u) =
+    compare t u
+
+
+
+---- View
+
+
+{-| AM or PM?
+-}
+type Meridiem
+    = AM
+    | PM
+
+
+{-| Convert 24 hours to 12 hours (AM/PM).
+-}
+to12Hours : Int -> ( Int, Meridiem )
+to12Hours hours24 =
+    let
+        hour12 =
+            modBy 12 hours24
+
+        hour12Corrected =
+            case hour12 of
+                0 ->
+                    12
+
+                _ ->
+                    hour12
+
+        meridiem =
+            case hours24 >= 12 of
+                True ->
+                    PM
+
+                False ->
+                    AM
+    in
+    ( hour12Corrected, meridiem )
+
+
+viewTime : Time -> { hour24 : Int, minute : Int, second : Int, millisecond : Int }
+viewTime (Time time) =
+    let
+        noonTo12 =
+            time + 43200000
+
+        ( wholeHours, withoutHours ) =
+            substractWhole noonTo12 3600000
+
+        ( wholeMinutes, withoutMinutes ) =
+            substractWhole withoutHours 60000
+
+        ( wholeSeconds, withoutSeconds ) =
+            substractWhole withoutMinutes 1000
+    in
+    { hour24 = wholeHours
+    , minute = wholeMinutes
+    , second = wholeSeconds
+    , millisecond = withoutSeconds
+    }
+
+
+
+---- HELPER FUNCTIONS ----
+
+
+{-| Subtract the whole part, when dividing by the factor, and return the whole part, and the remaining value.
+-}
+substractWhole : Int -> Int -> ( Int, Int )
+substractWhole value factor =
+    let
+        whole =
+            value // factor
+    in
+    ( whole, value - whole * factor )
