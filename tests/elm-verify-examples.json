@@ -1,6 +1,7 @@
 {
   "root": "../src",
   "tests": [
+    "./README.md",
     "Chrono.Moment",
     "Chrono.Date",
     "Chrono.Time",

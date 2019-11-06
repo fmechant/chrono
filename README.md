@@ -1,3 +1,69 @@
+# elm-chrono
+
+`elm-chrono` simplifies working with dates, time and moments in time.
+
+## Dates
+It treats dates as first-class citizen, where time travel is easy.
+
+A simple example using Date:
+```elm
+import Chrono.Date as Date exposing (Date)
+import Chrono.GregorianCalendar as Cal
+
+let
+    twoWeeksAgo: Date -> Date
+    twoWeeksAgo date =
+        date 
+            |> Cal.travel (Cal.intoPast (Cal.weeks 2))
+in
+Cal.fromGregorianDate { day = 15, month = Cal.January, year = 2020  }
+    |> twoWeeksAgo
+--> Cal.fromGregorianDate { day = 1, month = Cal.January, year = 2020  }
+```
+
+When working with months, we need a `MoveStrategy` so the time traveller
+knows what to do with impossible dates.
+
+An example with a `MoveStrategy`:
+```elm
+import Chrono.Date as Date exposing (Date)
+import Chrono.GregorianCalendar as Cal
+
+let
+    dateOfBirth: Date -> Date
+    dateOfBirth date =
+        date 
+            |> Cal.travel (Cal.intoFuture (Cal.months 9 Cal.stayInSameMonth))
+in
+Cal.fromGregorianDate { day = 30, month = Cal.May, year = 2019  }
+    |> dateOfBirth
+--> Cal.fromGregorianDate { day = 29, month = Cal.February, year = 2020  }
+```
+
+## Moments in Time
+It also provides a way to specify a specific moment in time.
+
+What we call `Moment`, is what [elm/time][coretime] calls `Posix` and what
+[Abseil][abseil] calls _Absolute Time_.
+To improve understanding, let's look at the moment of time Neil Armstrong first
+set foot on the moon. If we look at [wikipedia][wikiapollo], it says that
+happened on July 21, 1969 at 02:56 UTC. When viewing live in Europe, you could
+have seen that on July 21 at 04:56. In New York, that would have been on July 20
+at 22:56. Remark that even the date is different.
+To be able to represent a moment in time, we pick a moment in the past, and work
+relative from that.
+
+[coretime]: https://package.elm-lang.org/packages/elm/time/latest
+[abseil]: https://abseil.io/docs/cpp/guides/time
+[wikiapollo]: https://en.wikipedia.org/wiki/Apollo_11
+
+
+
+
+
+
+
+
 # Working with dates, times and moments in time
 
 When you want to work with dates and time, you realize that it is surprisingly complex. You need to learn about time zones and posix time and calendars, but you only simply want to use a Date.
@@ -7,16 +73,6 @@ This library aspires to allow you to work with dates and times, preventing you f
 
 Still, there are things you should be aware of to be able to work with dates and times effectively. Two concepts to know about.
 
-## Moments in time
-
-The first concept is moments in time. What [elm/time][coretime] calls `Posix` and what [Abseil][abseil] calls _Absolute Time_. It is the moment in time that something happened.
-To improve understanding, let's look at the moment of time Neil Armstrong first set foot on the moon. If we look at [wikipedia][wikiapollo], it says that happened on
-July 21, 1969 at 02:56 UTC. When viewing live in Europe, you could have seen that on July 21 at 04:56. In New York, that would have been on July 20 at 22:56. Remark that even the date is different.
-To be able to represent a moment in time, we pick a moment in the past, and work relative from that.
-
-[coretime]: https://package.elm-lang.org/packages/elm/time/latest
-[abseil]: https://abseil.io/docs/cpp/guides/time
-[wikiapollo]: https://en.wikipedia.org/wiki/Apollo_11
 
 ## Date and Time
 
@@ -53,7 +109,7 @@ library:
 2. get the dates and times fast forwarded a week three times
 3. convert the dates and times to moments in the specific time zone
 
-```elm
+
 import Chrono.Date as Date
 import Chrono.Time as Time
 import Chrono.TimeZone as TimeZone exposing (TimeZone)
@@ -86,7 +142,7 @@ recurrent 3 (Date.weeks 1) brusselsTimeZone (inBrussels {day = 29, month = Cal.M
 -->    inBrussels {day = 12, month = Cal.April, year = 2019, hour = 13, minute = 0},
 -->    inBrussels {day = 19, month = Cal.April, year = 2019, hour = 13, minute = 0}
 --> ]
-```
+
 
 So, instead of mixing the concept, we explicitly use the correct models, so we have
 predictable results. Even when the weeks include a change of the time offset
