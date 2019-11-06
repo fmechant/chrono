@@ -16,9 +16,9 @@ let
         date 
             |> Cal.travel (Cal.intoPast (Cal.weeks 2))
 in
-Cal.fromGregorianDate { day = 15, month = Cal.January, year = 2020  }
+Cal.toDate { day = 15, month = Cal.January, year = 2020  }
     |> twoWeeksAgo
---> Cal.fromGregorianDate { day = 1, month = Cal.January, year = 2020  }
+--> Cal.toDate { day = 1, month = Cal.January, year = 2020  }
 ```
 
 When working with months, we need a `MoveStrategy` so the time traveller
@@ -35,9 +35,9 @@ let
         date 
             |> Cal.travel (Cal.intoFuture (Cal.months 9 Cal.stayInSameMonth))
 in
-Cal.fromGregorianDate { day = 30, month = Cal.May, year = 2019  }
+Cal.toDate { day = 30, month = Cal.May, year = 2019  }
     |> dateOfBirth
---> Cal.fromGregorianDate { day = 29, month = Cal.February, year = 2020  }
+--> Cal.toDate { day = 29, month = Cal.February, year = 2020  }
 ```
 
 ## Moments in Time
@@ -45,11 +45,13 @@ It also provides a way to specify a specific moment in time.
 
 What we call `Moment`, is what [elm/time][coretime] calls `Posix` and what
 [Abseil][abseil] calls _Absolute Time_.
+
 To improve understanding, let's look at the moment of time Neil Armstrong first
 set foot on the moon. If we look at [wikipedia][wikiapollo], it says that
 happened on July 21, 1969 at 02:56 UTC. When viewing live in Europe, you could
 have seen that on July 21 at 04:56. In New York, that would have been on July 20
 at 22:56. Remark that even the date is different.
+
 To be able to represent a moment in time, we pick a moment in the past, and work
 relative from that.
 

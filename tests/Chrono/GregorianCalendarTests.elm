@@ -15,14 +15,14 @@ all : Test
 all =
     describe "Gregorian Calendar Tests"
         [ describe "conversions"
-            [ test "fromGregorianDate of January 1, 2000 in utc is the correct date. " <|
+            [ test "toDate of January 1, 2000 in utc is the correct date. " <|
                 \() ->
-                    fromGregorianDate { year = 2000, month = January, day = 1 }
+                    toDate { year = 2000, month = January, day = 1 }
                         |> Expect.equal firstJanuary2000
-            , test "toGregorianDate returns the correct day, month and year. " <|
+            , test "fromDate returns the correct day, month and year. " <|
                 \() ->
                     twentyEightFebruary2000
-                        |> toGregorianDate
+                        |> fromDate
                         |> Expect.equal { year = 2000, month = February, day = 28 }
             ]
         , describe "leap years"
@@ -44,7 +44,7 @@ all =
                         |> Expect.equal LeapYear
             , test "2019-05-06 is in a common year" <|
                 \() ->
-                    fromGregorianDate { year = 2019, month = May, day = 6 }
+                    toDate { year = 2019, month = May, day = 6 }
                         |> toYearType
                         |> Expect.equal CommonYear
             ]
@@ -74,34 +74,34 @@ all =
                         in
                         twentyEightFebruary2000
                             |> travel moves
-                            |> Expect.equal (fromGregorianDate { day = 2, month = June, year = 2000 })
+                            |> Expect.equal (toDate { day = 2, month = June, year = 2000 })
                 , test "moving to 30 February stays in same month and becomes 28 February for common year" <|
                     \() ->
-                        fromGregorianDate { day = 30, month = January, year = 2003 }
+                        toDate { day = 30, month = January, year = 2003 }
                             |> travel (intoFuture (months 1 stayInSameMonth))
-                            |> Expect.equal (fromGregorianDate { day = 28, month = February, year = 2003 })
+                            |> Expect.equal (toDate { day = 28, month = February, year = 2003 })
                 , test "moving to 30 February stays in same month and becomes 29 February for leap year" <|
                     \() ->
-                        fromGregorianDate { day = 30, month = January, year = 2004 }
+                        toDate { day = 30, month = January, year = 2004 }
                             |> travel (intoFuture (months 1 stayInSameMonth))
-                            |> Expect.equal (fromGregorianDate { day = 29, month = February, year = 2004 })
+                            |> Expect.equal (toDate { day = 29, month = February, year = 2004 })
                 , test "moving months into the next year changes the year" <|
                     \() ->
-                        fromGregorianDate { day = 14, month = October, year = 2005 }
+                        toDate { day = 14, month = October, year = 2005 }
                             |> travel (intoFuture (months 5 stayInSameMonth))
-                            |> Expect.equal (fromGregorianDate { day = 14, month = March, year = 2006 })
+                            |> Expect.equal (toDate { day = 14, month = March, year = 2006 })
                 , fuzz3 (Fuzz.intRange 1 28) fuzzMonth (Fuzz.tuple ( fuzzYear, Fuzz.intRange 1 100 )) "moving years" <|
                     \aDay aMonth ( aYear, numberOfYears ) ->
-                        fromGregorianDate { year = aYear, month = aMonth, day = aDay }
+                        toDate { year = aYear, month = aMonth, day = aDay }
                             |> travel (intoFuture (years numberOfYears stayInSameMonth))
-                            |> Expect.equal (fromGregorianDate { year = aYear + numberOfYears, month = aMonth, day = aDay })
+                            |> Expect.equal (toDate { year = aYear + numberOfYears, month = aMonth, day = aDay })
                 ]
             , describe "traveling into the past" <|
                 [ fuzz2 (Fuzz.intRange 1 31) (Fuzz.intRange 1900 2100) "moving a month into the past in January goes to the year before" <|
                     \aDay aYear ->
-                        fromGregorianDate { year = aYear, month = January, day = aDay }
+                        toDate { year = aYear, month = January, day = aDay }
                             |> travel (intoPast (months 1 stayInSameMonth))
-                            |> Expect.equal (fromGregorianDate { year = aYear - 1, month = December, day = aDay })
+                            |> Expect.equal (toDate { year = aYear - 1, month = December, day = aDay })
                 ]
             , fuzz2 fuzzDate (Fuzz.intRange 0 1000) "traveling weeks into the past and then back into future returns to the same date" <|
                 \aDate numberOfWeeks ->
@@ -118,27 +118,27 @@ all =
                     \() ->
                         firstJanuary2000
                             |> travel (inMonth first Date.Wednesday)
-                            |> Expect.equal (fromGregorianDate { day = 5, month = January, year = 2000 })
+                            |> Expect.equal (toDate { day = 5, month = January, year = 2000 })
                 , test "second Wednesday in month returns the second Wednesday of the month" <|
                     \() ->
                         firstJanuary2000
                             |> travel (inMonth second Date.Wednesday)
-                            |> Expect.equal (fromGregorianDate { day = 12, month = January, year = 2000 })
+                            |> Expect.equal (toDate { day = 12, month = January, year = 2000 })
                 , test "second to last Wednesday in month returns the second to last Wednesday of the month" <|
                     \() ->
                         firstJanuary2000
                             |> travel (inMonth secondToLast Date.Wednesday)
-                            |> Expect.equal (fromGregorianDate { day = 19, month = January, year = 2000 })
+                            |> Expect.equal (toDate { day = 19, month = January, year = 2000 })
                 , test "specific day in month returns the day of the month" <|
                     \() ->
                         firstJanuary2000
                             |> travel (toDayInMonth 16)
-                            |> Expect.equal (fromGregorianDate { day = 16, month = January, year = 2000 })
+                            |> Expect.equal (toDate { day = 16, month = January, year = 2000 })
                 , test "specific day in month respects the length of the month" <|
                     \() ->
-                        fromGregorianDate { day = 1, month = February, year = 2000 }
+                        toDate { day = 1, month = February, year = 2000 }
                             |> travel (toDayInMonth 31)
-                            |> Expect.equal (fromGregorianDate { day = 29, month = February, year = 2000 })
+                            |> Expect.equal (toDate { day = 29, month = February, year = 2000 })
                 ]
             , describe "only when"
                 [ fuzz2 fuzzDate (Fuzz.intRange 1 100) "only when should stay in present when predicate returns false" <|

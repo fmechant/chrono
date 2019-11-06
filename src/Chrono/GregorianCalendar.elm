@@ -8,7 +8,7 @@ module Chrono.GregorianCalendar exposing
     , andThenOnlyWhen
     , days
     , first
-    , fromGregorianDate
+    , fromDate
     , fromMonthNumber
     , inMonth
     , intoFuture
@@ -22,8 +22,8 @@ module Chrono.GregorianCalendar exposing
     , secondToLast
     , stayInSameMonth
     , third
+    , toDate
     , toDayInMonth
-    , toGregorianDate
     , toMonthNumber
     , toYearType
     , travel
@@ -41,7 +41,7 @@ import Chrono.Date as Date exposing (Date)
 
 {-| The date specified using the gregorian year, month and day.
 
-Use it with fromGregorianDate to conveniently create a date.
+Use it with toDate to conveniently create a date.
 
 Use the actual Date type to store, transmit, move, ... dates.
 
@@ -67,8 +67,8 @@ Year, month and day combinations that are not actual gregorian dates, like 2019-
 It uses the algoritm described in <https://en.wikipedia.org/wiki/Julian_day>
 
 -}
-fromGregorianDate : GregorianDate -> Date
-fromGregorianDate { day, month, year } =
+toDate : GregorianDate -> Date
+toDate { day, month, year } =
     let
         m =
             toMonthNumber month
@@ -81,8 +81,8 @@ fromGregorianDate { day, month, year } =
 This is typically used in the view to visualize the date.
 
 -}
-toGregorianDate : Date -> GregorianDate
-toGregorianDate date =
+fromDate : Date -> GregorianDate
+fromDate date =
     let
         j =
             Date.toJDN date
@@ -158,7 +158,7 @@ typeOfYear year =
 -}
 toYearType : Date -> YearType
 toYearType date =
-    toGregorianDate date |> .year |> typeOfYear
+    fromDate date |> .year |> typeOfYear
 
 
 
@@ -355,9 +355,9 @@ travel (Moves moves) date =
 
 Example:
 
-    fromGregorianDate { day = 1, month = January, year = 2000  }
+    toDate { day = 1, month = January, year = 2000  }
         |> travel (intoFuture (days 15) |> andThen intoFuture (years 2 stayInSameMonth))
-    --> fromGregorianDate { day = 16, month = January, year = 2002  }
+    --> toDate { day = 16, month = January, year = 2002  }
 
 -}
 andThen : (a -> Moves) -> a -> Moves -> Moves
@@ -378,9 +378,9 @@ Example:
     let
         weekday = Date.Wednesday
     in
-    fromGregorianDate { day = 5, month = January, year = 2000  }
+    toDate { day = 5, month = January, year = 2000  }
         |> travel (onlyWhen (\d -> Date.toWeekday d /= weekday) (nextWeekday weekday))
-    --> fromGregorianDate { day = 5, month = January, year = 2000  }
+    --> toDate { day = 5, month = January, year = 2000  }
 
 -}
 onlyWhen : (Date -> Bool) -> Moves -> Moves
@@ -400,9 +400,9 @@ Example:
             toDayInMonth 1
                 |> andThenOnlyWhen (\d -> Date.toWeekday d /= weekday) (nextWeekday weekday)
     in
-    fromGregorianDate { day = 27, month = March, year = 2000  }
+    toDate { day = 27, month = March, year = 2000  }
         |> travel moves
-    --> fromGregorianDate { day = 1, month = March, year = 2000  }
+    --> toDate { day = 1, month = March, year = 2000  }
 
 -}
 andThenOnlyWhen : (Date -> Bool) -> Moves -> Moves -> Moves
@@ -436,7 +436,7 @@ move item date =
         ToFuture (NumberOfMonths noMonths strategy) ->
             let
                 dmy =
-                    toGregorianDate date
+                    fromDate date
 
                 monthsWithoutYears =
                     remainderBy 12 noMonths
@@ -457,7 +457,7 @@ move item date =
                     else
                         yearsDiffWhenPositieve
             in
-            fromGregorianDate <|
+            toDate <|
                 strategy
                     { day = dmy.day
                     , month = fromMonthNumber <| 1 + modBy 12 newMonthMinusOne
@@ -467,9 +467,9 @@ move item date =
         ToFuture (NumberOfYears noYears strategy) ->
             let
                 dmy =
-                    toGregorianDate date
+                    fromDate date
             in
-            fromGregorianDate <| strategy { day = dmy.day, month = dmy.month, year = dmy.year + noYears }
+            toDate <| strategy { day = dmy.day, month = dmy.month, year = dmy.year + noYears }
 
         ToNextWeekDay weekday ->
             date
@@ -501,9 +501,9 @@ move item date =
         ToDayInMonth day ->
             let
                 dmy =
-                    toGregorianDate date
+                    fromDate date
             in
-            fromGregorianDate <| stayInSameMonth { day = day, month = dmy.month, year = dmy.year }
+            toDate <| stayInSameMonth { day = day, month = dmy.month, year = dmy.year }
 
 
 
@@ -524,9 +524,9 @@ type NominalMove
 
 Example:
 
-    fromGregorianDate { day = 1, month = January, year = 2000  }
+    toDate { day = 1, month = January, year = 2000  }
         |> travel (intoFuture (days 15))
-    --> fromGregorianDate { day = 16, month = January, year = 2000  }
+    --> toDate { day = 16, month = January, year = 2000  }
 
 -}
 intoFuture : NominalMove -> Moves
@@ -537,9 +537,9 @@ intoFuture =
 {-| Moves that define a nominal move into the past.
 Example:
 
-    fromGregorianDate { day = 16, month = January, year = 2000  }
+    toDate { day = 16, month = January, year = 2000  }
         |> travel (intoPast (days 15))
-    --> fromGregorianDate { day = 1, month = January, year = 2000  }
+    --> toDate { day = 1, month = January, year = 2000  }
 
 -}
 intoPast : NominalMove -> Moves
@@ -612,9 +612,9 @@ Example:
 
     import Chrono.Date as Date
 
-    fromGregorianDate { day = 1, month = January, year = 2000 }
+    toDate { day = 1, month = January, year = 2000 }
         |> travel (nextWeekday Date.Wednesday)
-    --> fromGregorianDate { day = 5, month = January, year = 2000 }
+    --> toDate { day = 5, month = January, year = 2000 }
 
 -}
 nextWeekday : Date.Weekday -> Moves
@@ -631,9 +631,9 @@ Example:
 
     import Chrono.Date as Date
 
-    fromGregorianDate { day = 8, month = January, year = 2000 }
+    toDate { day = 8, month = January, year = 2000 }
         |> travel (lastWeekday Date.Wednesday)
-    --> fromGregorianDate { day = 5, month = January, year = 2000 }
+    --> toDate { day = 5, month = January, year = 2000 }
 
 -}
 lastWeekday : Date.Weekday -> Moves
@@ -646,9 +646,9 @@ The day is clamped so that it is a valid day in the month.
 
 Example:
 
-    fromGregorianDate { day = 8, month = January, year = 2000 }
+    toDate { day = 8, month = January, year = 2000 }
         |> travel (toDayInMonth 15)
-    --> fromGregorianDate { day = 15, month = January, year = 2000 }
+    --> toDate { day = 15, month = January, year = 2000 }
 
 -}
 toDayInMonth : Int -> Moves
@@ -662,9 +662,9 @@ Example:
 
     import Chrono.Date as Date
 
-    fromGregorianDate { day = 8, month = January, year = 2000 }
+    toDate { day = 8, month = January, year = 2000 }
         |> travel (inMonth second Date.Wednesday)
-    --> fromGregorianDate { day = 12, month = January, year = 2000 }
+    --> toDate { day = 12, month = January, year = 2000 }
 
 -}
 inMonth : Ordinal -> Date.Weekday -> Moves
