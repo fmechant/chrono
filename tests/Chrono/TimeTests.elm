@@ -2,7 +2,7 @@ module Chrono.TimeTests exposing (all)
 
 import Chrono.Moment as Moment
 import Chrono.TestUtils exposing (..)
-import Chrono.Time exposing (..)
+import Chrono.Time as Time exposing (..)
 import Chrono.TimeZone as TimeZone
 import Expect
 import Fuzz
@@ -51,11 +51,11 @@ all =
                     pm hour
                         |> Expect.equal (h24 (12 + hour))
             ]
-        , describe "viewTime"
+        , describe "view"
             [ test "view time for noon" <|
                 \() ->
                     noon
-                        |> viewTime
+                        |> Time.view
                         |> Expect.equal
                             { hour24 = 12
                             , minute = 0
@@ -65,14 +65,14 @@ all =
             , test "to12Hours for noon" <|
                 \() ->
                     noon
-                        |> viewTime
+                        |> Time.view
                         |> .hour24
                         |> to12Hours
                         |> Expect.equal ( 12, PM )
             , test "to12Hours for mightnight" <|
                 \() ->
                     midnight
-                        |> viewTime
+                        |> Time.view
                         |> .hour24
                         |> to12Hours
                         |> Expect.equal ( 12, AM )

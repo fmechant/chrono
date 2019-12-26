@@ -13,7 +13,7 @@ module Chrono.Time exposing
     , pm
     , to12Hours
     , toMsSinceNoon
-    , viewTime
+    , view
     )
 
 {-| A specific time of the day.
@@ -36,6 +36,9 @@ type Time
 
 {-| An incomplete time type that only contains the hour of the time.
 Use m to complete it to a Time type.
+
+Use am, pm or h24 to create it.
+
 -}
 type Hour
     = Hour Int
@@ -67,7 +70,7 @@ Values below 1 are considered as 1, values above 12 are considered as 12.
 Example:
 
     am 7 |> m 15 -- 07:15:00,000
-        |> viewTime
+        |> view
     --> {hour24 = 7, minute = 15, second = 0, millisecond = 0}
 
 -}
@@ -86,7 +89,7 @@ Values below 1 are considered as 1, values above 12 are considered as 12.
 Example:
 
     pm 7 |> m 15 -- 19:15:00,000
-        |> viewTime
+        |> view
     --> {hour24 = 19, minute = 15, second = 0, millisecond = 0}
 
 -}
@@ -118,7 +121,7 @@ Values below 0 are considered as 0, values above 23 are considered as 23.
 Example:
 
     h24 19 |> m 15 -- 19:15:00,000
-        |> viewTime
+        |> view
     --> {hour24 = 19, minute = 15, second = 0, millisecond = 0}
 
 -}
@@ -132,7 +135,7 @@ h24 value =
 Example:
 
     am 7 |> m 15 -- 7:15:00,000
-        |> viewTime
+        |> view
     --> {hour24 = 7, minute = 15, second = 0, millisecond = 0}
 
 -}
@@ -200,6 +203,10 @@ type Meridiem
 
 
 {-| Convert 24 hours to 12 hours (AM/PM).
+Example:
+
+    to12Hours 14 --> (2, PM)
+
 -}
 to12Hours : Int -> ( Int, Meridiem )
 to12Hours hours24 =
@@ -228,11 +235,49 @@ to12Hours hours24 =
 
 {-| View the time split up in hours, minutes, seconds and milliseconds.
 
+Instead of using formatting strings, we prefer here to make it easy to make your
+own view functions.
+
+Example:
+
+    let
+        myTimeView : Time -> String
+        myTimeView =
+            let
+                toStr = String.padLeft 2 '0' << String.fromInt
+                format t =
+                    toStr t.hour24 ++ ":" ++ toStr t.minute ++ ":" ++ toStr t.second
+            in
+            view >> format
+    in
+    pm 4 |> m 9 |> ms 15000
+        |> myTimeView
+        --> "16:09:15"
+
 Use to12Hours additionally if you want the hours in AM/PM format.
+Example using meridiem:
+
+    let
+        myTimeView : Time -> String
+        myTimeView t =
+            let
+                {hour24, minute, second, millisecond} = view t
+                (hour, meridiem) = to12Hours hour24
+                toStr = String.padLeft 2 '0' << String.fromInt
+                meridiemView m =
+                    case m of
+                        AM -> "AM"
+                        PM -> "PM"
+            in
+            String.fromInt hour ++ ":" ++ toStr minute ++ " " ++ meridiemView meridiem
+    in
+    pm 4 |> m 9 |> ms 15000
+        |> myTimeView
+        --> "4:09 PM"
 
 -}
-viewTime : Time -> { hour24 : Int, minute : Int, second : Int, millisecond : Int }
-viewTime (Time time) =
+view : Time -> { hour24 : Int, minute : Int, second : Int, millisecond : Int }
+view (Time time) =
     let
         noonTo12 =
             time + 43200000

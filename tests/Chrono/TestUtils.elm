@@ -1,5 +1,6 @@
 module Chrono.TestUtils exposing
-    ( fuzzDate
+    ( daylightSavingsTimeZone
+    , fuzzDate
     , fuzzDateDuration
     , fuzzDuration
     , fuzzMoment
@@ -11,6 +12,7 @@ module Chrono.TestUtils exposing
 import Chrono.Date as Date exposing (Date)
 import Chrono.GregorianCalendar as Cal
 import Chrono.Moment as Moment exposing (Moment)
+import Chrono.TimeZone as TimeZone exposing (TimeZone)
 import Fuzz
 import Random
 
@@ -48,3 +50,14 @@ fuzzMonth =
 fuzzYear : Fuzz.Fuzzer Int
 fuzzYear =
     Fuzz.intRange 1900 2100
+
+
+{-| TimeZone that switches from +01:00 to +02:00 at the given moment.
+-}
+daylightSavingsTimeZone : Moment -> TimeZone
+daylightSavingsTimeZone moment =
+    let
+        start =
+            round <| (toFloat <| Moment.toMsAfterEpoch moment) / 60000
+    in
+    TimeZone.customZone 60 [ { start = start, offset = 120 } ]
