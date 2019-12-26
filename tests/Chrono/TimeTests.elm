@@ -89,4 +89,29 @@ all =
                         |> ms 45
                         |> Expect.equal (h24 2 |> m 5 |> ms 45)
             ]
+        , daylightSavings
+        ]
+
+
+daylightSavings : Test
+daylightSavings =
+    let
+        switchMoment =
+            -- 2019-03-21 03:00:00 GMT+02:00 DST
+            Moment.fromMsSinceEpoch 1553994000000
+
+        zone =
+            daylightSavingsTimeZone switchMoment
+    in
+    describe "handle daylight-savings in fromMoment"
+        [ test "before switch should return just before 2" <|
+            \() ->
+                Moment.intoPast (Moment.minutes 10) switchMoment
+                    |> Time.fromMoment zone
+                    |> Expect.equal (h24 1 |> m 50)
+        , test "after switch should return just after 3" <|
+            \() ->
+                Moment.intoFuture (Moment.minutes 10) switchMoment
+                    |> Time.fromMoment zone
+                    |> Expect.equal (h24 3 |> m 10)
         ]
