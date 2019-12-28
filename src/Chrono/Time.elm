@@ -16,7 +16,74 @@ module Chrono.Time exposing
     , view
     )
 
-{-| A specific time of the day.
+{-| A specific time of the day, like 14:00:00 or 6:00 PM.
+
+You can get the time from a moment, using a time zone.
+You can create a time using 12 hours or 24 hours notation.
+
+It also contains a function to view the time and to chronologically compare times.
+
+
+# What about time travel?
+
+There are no functions to travel in time, because of the potential errors involved.
+When we add two hours to 01:00, we expect 3:00, but that is not always what we want,
+because of daylight savings.
+
+The only way to travel through time is using either moments or dates. If you want
+to have the time two hours later, you use Moment. If you want the hour to be two higher,
+you use Date.
+
+Example:
+Suppose you are at 2019-03-21 01:00:00 GMT+01:00 DST, right before the daylight-savings
+switch. What does going 2 hours in the future mean?
+
+Using moment (switch of daylight-savings time on 2019-03-21 03:00:00 GMT+02:00 DST):
+
+    import Chrono.Date as Date
+    import Chrono.DateAndTime as DateAndTime
+    import Chrono.Moment as Moment
+    import Chrono.TimeZone as TimeZone
+
+    let
+        switchMoment =
+            Moment.fromMsSinceEpoch 1553994000000
+        zone =
+            TimeZone.customZone 60 [ { start = 25899900, offset = 120 } ]
+        date =
+            Date.fromMoment zone switchMoment
+        oneAClock = h24 1 |> m 0
+    in
+    date
+        |> DateAndTime.withTime oneAClock
+        |> Debug.log "01:00"
+        |> DateAndTime.toMoment zone
+        |> Moment.intoFuture (Moment.hours 2)
+        |> DateAndTime.fromMoment zone
+        |> .time
+        --> h24 4 |> m 0
+
+Using date:
+
+    import Chrono.Date as Date
+    import Chrono.DateAndTime as DateAndTime
+    import Chrono.Moment as Moment
+    import Chrono.TimeZone as TimeZone
+
+    let
+        switchMoment =
+            Moment.fromMsSinceEpoch 1553994000000
+        zone =
+            TimeZone.customZone 60 [ { start = 25899900, offset = 120 } ]
+        date =
+            Date.fromMoment zone switchMoment
+        threeAClock = h24 3 |> m 0
+    in
+    date
+        |> DateAndTime.withTime threeAClock
+        |> .time
+        --> h24 3 |> m 0
+
 -}
 
 import Chrono.Moment as Moment exposing (Moment)
