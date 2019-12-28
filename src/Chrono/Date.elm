@@ -137,7 +137,7 @@ type Weekday
     | Wednesday
     | Thursday
     | Friday
-    | Saterday
+    | Saturday
     | Sunday
 
 
@@ -162,7 +162,7 @@ toWeekday (JDN jdn) =
             Friday
 
         6 ->
-            Saterday
+            Saturday
 
         _ ->
             Sunday
@@ -189,7 +189,7 @@ toWeekdayNumber weekday =
         Friday ->
             5
 
-        Saterday ->
+        Saturday ->
             6
 
         Sunday ->
