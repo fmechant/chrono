@@ -104,14 +104,24 @@ daylightSavings =
             daylightSavingsTimeZone switchMoment
     in
     describe "handle daylight-savings in fromMoment"
-        [ test "before switch should return just before 2" <|
+        [ test "should return just before 2 before switch" <|
             \() ->
                 Moment.intoPast (Moment.minutes 10) switchMoment
                     |> Time.fromMoment zone
                     |> Expect.equal (h24 1 |> m 50)
-        , test "after switch should return just after 3" <|
+        , test "should return just after 3 after switch" <|
             \() ->
                 Moment.intoFuture (Moment.minutes 10) switchMoment
                     |> Time.fromMoment zone
                     |> Expect.equal (h24 3 |> m 10)
+        , test "should add difference when moving over the switch moment" <|
+            \() ->
+                let
+                    before =
+                        Moment.intoPast (Moment.hours 1) switchMoment
+                in
+                before
+                    |> Moment.intoFuture (Moment.hours 2)
+                    |> fromMoment zone
+                    |> Expect.equal (h24 4 |> m 0)
         ]
