@@ -65,7 +65,7 @@ all =
             , fuzz fuzzThursday "next to day later this week should stay in this week" <|
                 \aThursday ->
                     aThursday
-                        |> next Saterday
+                        |> next Saturday
                         |> Expect.equal (intoFuture (days 2) aThursday)
             , fuzz fuzzThursday "last to current weekday should move a week" <|
                 \aThursday ->
@@ -80,7 +80,7 @@ all =
             , fuzz fuzzThursday "next to day later this week should move to the previous week" <|
                 \aThursday ->
                     aThursday
-                        |> last Saterday
+                        |> last Saturday
                         |> Expect.equal (intoPast (days 5) aThursday)
             , fuzz2 fuzzDate Fuzz.int "moving weeks is the same are moving 7 times that in days." <|
                 \aDate noWeeks ->
