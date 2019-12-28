@@ -7,9 +7,8 @@ module Chrono.DateAndTime exposing
     )
 
 import Chrono.Date as Date exposing (Date)
-import Chrono.Moment as Moment exposing (Moment)
+import Chrono.Moment as Moment exposing (Moment, TimeZone)
 import Chrono.Time as Time exposing (Time)
-import Chrono.TimeZone as TimeZone exposing (TimeZone)
 import Task exposing (Task)
 import Time as CoreTime
 
@@ -53,5 +52,5 @@ where this task is run.
 -}
 now : Task x DateAndTime
 now =
-    Task.map2 fromMoment (Task.map TimeZone.withSameOffset CoreTime.here) <|
+    Task.map2 fromMoment (Task.map Moment.zoneWithSameOffset CoreTime.here) <|
         Task.map (Moment.fromMsSinceEpoch << CoreTime.posixToMillis) CoreTime.now

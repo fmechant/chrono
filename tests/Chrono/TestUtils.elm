@@ -12,8 +12,7 @@ module Chrono.TestUtils exposing
 
 import Chrono.Date as Date exposing (Date)
 import Chrono.GregorianCalendar as Cal
-import Chrono.Moment as Moment exposing (Moment)
-import Chrono.TimeZone as TimeZone exposing (TimeZone)
+import Chrono.Moment as Moment exposing (Moment, TimeZone)
 import Fuzz
 import Random
 
@@ -66,4 +65,4 @@ daylightSavingsTimeZone moment =
         start =
             round <| (toFloat <| Moment.toMsAfterEpoch moment) / 60000
     in
-    TimeZone.customZone 60 [ { start = start, offset = 120 } ]
+    Moment.customZone 60 [ { start = start, offset = 120 } ]

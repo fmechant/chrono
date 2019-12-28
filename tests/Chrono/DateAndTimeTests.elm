@@ -5,7 +5,6 @@ import Chrono.DateAndTime exposing (..)
 import Chrono.Moment as Moment
 import Chrono.TestUtils exposing (..)
 import Chrono.Time as Time exposing (h24, m)
-import Chrono.TimeZone as TimeZone
 import Expect
 import Fuzz
 import Test exposing (..)
@@ -22,7 +21,7 @@ all =
                             Moment.fromMsSinceEpoch 120000
 
                         timeZone =
-                            TimeZone.utc
+                            Moment.utc
                     in
                     moment
                         |> fromMoment timeZone
@@ -30,8 +29,8 @@ all =
             , fuzz fuzzMoment "converting the date and time and back to moment should be consistent." <|
                 \aMoment ->
                     aMoment
-                        |> fromMoment TimeZone.utc
-                        |> toMoment TimeZone.utc
+                        |> fromMoment Moment.utc
+                        |> toMoment Moment.utc
                         |> Expect.equal aMoment
             ]
         , daylightSavingsSpecific
@@ -46,7 +45,7 @@ daylightSavingsSpecific =
             Moment.fromMsSinceEpoch 1553994000000
 
         zone =
-            TimeZone.customZone 60 [ { start = 25899900, offset = 120 } ]
+            Moment.customZone 60 [ { start = 25899900, offset = 120 } ]
 
         date =
             Date.fromMoment zone switchMoment

@@ -43,13 +43,12 @@ Using moment (switch of daylight-savings time on 2019-03-21 03:00:00 GMT+02:00 D
     import Chrono.Date as Date
     import Chrono.DateAndTime as DateAndTime
     import Chrono.Moment as Moment
-    import Chrono.TimeZone as TimeZone
 
     let
         switchMoment =
             Moment.fromMsSinceEpoch 1553994000000
         zone =
-            TimeZone.customZone 60 [ { start = 25899900, offset = 120 } ]
+            Moment.customZone 60 [ { start = 25899900, offset = 120 } ]
         date =
             Date.fromMoment zone switchMoment
         oneAClock = h24 1 |> m 0
@@ -68,13 +67,12 @@ Using date:
     import Chrono.Date as Date
     import Chrono.DateAndTime as DateAndTime
     import Chrono.Moment as Moment
-    import Chrono.TimeZone as TimeZone
 
     let
         switchMoment =
             Moment.fromMsSinceEpoch 1553994000000
         zone =
-            TimeZone.customZone 60 [ { start = 25899900, offset = 120 } ]
+            Moment.customZone 60 [ { start = 25899900, offset = 120 } ]
         date =
             Date.fromMoment zone switchMoment
         threeAClock = h24 3 |> m 0
@@ -86,8 +84,7 @@ Using date:
 
 -}
 
-import Chrono.Moment as Moment exposing (Moment)
-import Chrono.TimeZone as TimeZone exposing (TimeZone)
+import Chrono.Moment as Moment exposing (Moment, TimeZone)
 import List
 import Task exposing (Task)
 

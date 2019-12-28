@@ -3,7 +3,6 @@ module Chrono.DateTests exposing (all)
 import Chrono.Date exposing (..)
 import Chrono.Moment as Moment
 import Chrono.TestUtils exposing (..)
-import Chrono.TimeZone as TimeZone
 import Expect
 import Fuzz
 import Test exposing (..)
@@ -22,13 +21,13 @@ all =
             , test "January 1, 2000 is JDN 2,451,545." <|
                 \() ->
                     Moment.fromMsSinceEpoch 946684800000
-                        |> fromMoment TimeZone.utc
+                        |> fromMoment Moment.utc
                         |> toJDN
                         |> Expect.equal 2451545
             , test "Epoch moment in GMT-5 is JDN 2,440,587" <|
                 \() ->
                     epochMoment
-                        |> fromMoment (TimeZone.customZone (-5 * 60) [])
+                        |> fromMoment (Moment.customZone (-5 * 60) [])
                         |> toJDN
                         |> Expect.equal 2440587
             ]
@@ -43,12 +42,12 @@ all =
             [ test "toNoon on January 1, 1970 is 43200000 in utc." <|
                 \() ->
                     firstJanuary1970
-                        |> toNoon TimeZone.utc
+                        |> toNoon Moment.utc
                         |> Expect.equal (Moment.fromMsSinceEpoch 43200000)
             , test "toNoon on January 1, 1970 is 0 in GMT+12." <|
                 \() ->
                     firstJanuary1970
-                        |> toNoon (TimeZone.customZone (12 * 60) [])
+                        |> toNoon (Moment.customZone (12 * 60) [])
                         |> Expect.equal (Moment.fromMsSinceEpoch 0)
             ]
         , describe "move"
@@ -158,4 +157,4 @@ epochMoment =
 firstJanuary1970 : Date
 firstJanuary1970 =
     epochMoment
-        |> fromMoment TimeZone.utc
+        |> fromMoment Moment.utc

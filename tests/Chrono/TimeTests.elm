@@ -3,7 +3,6 @@ module Chrono.TimeTests exposing (all)
 import Chrono.Moment as Moment
 import Chrono.TestUtils exposing (..)
 import Chrono.Time as Time exposing (..)
-import Chrono.TimeZone as TimeZone
 import Expect
 import Fuzz
 import Test exposing (..)
@@ -17,7 +16,7 @@ all =
             [ test "Epoch moment is -43,200,000 in utc." <|
                 \() ->
                     Moment.fromMsSinceEpoch 0
-                        |> fromMoment TimeZone.utc
+                        |> fromMoment Moment.utc
                         |> toMsSinceNoon
                         |> Expect.equal -43200000
             , test "construct time using AM" <|

@@ -2,10 +2,13 @@ module Chrono.Moment exposing
     ( Direction(..)
     , Duration
     , Moment
+    , TimeZone
     , and
     , chronologicalComparison
+    , customZone
     , elapsed
     , fromMsSinceEpoch
+    , here
     , hours
     , intoFuture
     , intoFutureForZone
@@ -16,14 +19,15 @@ module Chrono.Moment exposing
     , now
     , seconds
     , toMsAfterEpoch
+    , utc
     , viewDuration
+    , zoneWithSameOffset
     )
 
 {-| The moment model represents specific moments in time. For example the moment you
 first started reading this sentence.
 -}
 
-import Chrono.TimeZone as TimeZone exposing (TimeZone)
 import Task exposing (Task)
 import Time as CoreTime
 
@@ -225,7 +229,74 @@ every (Duration duration) function =
 
 
 
+---- TIMEZONE ----
+
+
+type TimeZone
+    = TimeZone Int (List Era)
+
+
+type alias Era =
+    { start : Int
+    , offset : Int
+    }
+
+
+utc : TimeZone
+utc =
+    TimeZone 0 []
+
+
+customZone : Int -> List Era -> TimeZone
+customZone =
+    TimeZone
+
+
+zoneWithSameOffset : CoreTime.Zone -> TimeZone
+zoneWithSameOffset zone =
+    let
+        day =
+            CoreTime.toDay zone (CoreTime.millisToPosix 0)
+
+        hour =
+            CoreTime.toHour zone (CoreTime.millisToPosix 0)
+
+        minute =
+            CoreTime.toMinute zone (CoreTime.millisToPosix 0)
+
+        offset =
+            if day == 1 then
+                hour * 60 + minute
+
+            else
+                (hour - 24) * 60 + minute
+    in
+    TimeZone offset []
+
+
+relevantOffset : TimeZone -> Int -> Int
+relevantOffset (TimeZone defaultOffset eras) ms =
+    minutesInMs <|
+        case List.head (List.filter (\era -> minutesInMs era.start < ms) eras) of
+            Just era ->
+                era.offset
+
+            Nothing ->
+                defaultOffset
+
+
+here : Task x TimeZone
+here =
+    Task.map zoneWithSameOffset CoreTime.here
+
+
+
 ---- HELPER FUNCTIONS ----
+
+
+minutesInMs : Int -> Int
+minutesInMs value =
+    value * 60000
 
 
 {-| Subtract the whole part, when dividing by the factor, and return the whole part, and the remaining value.
@@ -247,7 +318,7 @@ intoFutureForZone zone moment =
         ms =
             toMsAfterEpoch moment
     in
-    fromMsSinceEpoch (ms + TimeZone.relevantOffset zone ms)
+    fromMsSinceEpoch (ms + relevantOffset zone ms)
 
 
 {-| Don't use this. Only useful for internal calculations in Date and Time.
@@ -258,4 +329,4 @@ intoPastForZone zone moment =
         ms =
             toMsAfterEpoch moment
     in
-    fromMsSinceEpoch (ms - TimeZone.relevantOffset zone ms)
+    fromMsSinceEpoch (ms - relevantOffset zone ms)
