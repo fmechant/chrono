@@ -1,5 +1,6 @@
 module Chrono.Moment exposing
-    ( Duration
+    ( Direction(..)
+    , Duration
     , Moment
     , and
     , chronologicalComparison
@@ -114,6 +115,14 @@ type Duration
     = Duration Int
 
 
+{-| Direction represents the relative position of one moment regarding another moment,
+whether it is into the future, or into the past.
+-}
+type Direction
+    = IntoTheFuture
+    | IntoThePast
+
+
 {-| A duration of some milliseconds.
 Only use positive values, if you want your code to be predictable.
 -}
@@ -189,9 +198,20 @@ The result is a duration, without the indication whether one moment is in the fu
 or in the past regarding to the other moment.
 
 -}
-elapsed : Moment -> Moment -> Duration
+elapsed : Moment -> Moment -> ( Duration, Direction )
 elapsed (Moment from) (Moment to) =
-    Duration <| abs <| to - from
+    let
+        diff =
+            to - from
+
+        dir =
+            if diff < 0 then
+                IntoThePast
+
+            else
+                IntoTheFuture
+    in
+    ( Duration <| abs diff, dir )
 
 
 {-| Get the current moment, every duration.

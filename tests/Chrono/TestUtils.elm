@@ -5,6 +5,7 @@ module Chrono.TestUtils exposing
     , fuzzDuration
     , fuzzMoment
     , fuzzMonth
+    , fuzzNonZeroDuration
     , fuzzThursday
     , fuzzYear
     )
@@ -30,6 +31,11 @@ fuzzMoment =
 fuzzDuration : Fuzz.Fuzzer Moment.Duration
 fuzzDuration =
     Fuzz.map Moment.milliseconds <| Fuzz.map abs Fuzz.int
+
+
+fuzzNonZeroDuration : Fuzz.Fuzzer Moment.Duration
+fuzzNonZeroDuration =
+    Fuzz.map Moment.milliseconds <| Fuzz.map ((+) 1) <| Fuzz.map abs Fuzz.int
 
 
 fuzzDateDuration : Fuzz.Fuzzer Date.Duration

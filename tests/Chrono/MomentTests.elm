@@ -45,7 +45,13 @@ all =
                     moment
                         |> intoFuture duration
                         |> elapsed moment
-                        |> Expect.equal duration
+                        |> Expect.equal ( duration, IntoTheFuture )
+            , fuzz2 fuzzMoment fuzzNonZeroDuration "elapsed should return a duration that gives the moment if we move it into the past" <|
+                \moment duration ->
+                    moment
+                        |> intoPast duration
+                        |> elapsed moment
+                        |> Expect.equal ( duration, IntoThePast )
             ]
         , describe "Moving Moments with Durations."
             [ fuzz2 fuzzMoment fuzzDuration "Moving into future and back into past should return to same moment" <|
