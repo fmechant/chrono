@@ -24,13 +24,13 @@ all =
                 \() ->
                     milliseconds 23
                         |> and seconds 5
-                        |> viewDuration
+                        |> durationView
                         |> Expect.equal { milliseconds = 23, seconds = 5, minutes = 0, hours = 0 }
             , test "combining overlaping milliseconds and seconds" <|
                 \() ->
                     milliseconds 1015
                         |> and seconds 5
-                        |> viewDuration
+                        |> durationView
                         |> Expect.equal { milliseconds = 15, seconds = 6, minutes = 0, hours = 0 }
             , test "combining overlaping milliseconds, seconds, minutes and hours" <|
                 \() ->
@@ -38,7 +38,7 @@ all =
                         |> and seconds 75
                         |> and minutes 190
                         |> and hours 20
-                        |> viewDuration
+                        |> durationView
                         |> Expect.equal { milliseconds = 15, seconds = 55, minutes = 12, hours = 23 }
             , fuzz2 fuzzMoment fuzzDuration "elapsed should return a duration that gives the moment if we move it into the future" <|
                 \moment duration ->

@@ -6,6 +6,7 @@ module Chrono.Moment exposing
     , and
     , chronologicalComparison
     , customZone
+    , durationView
     , elapsed
     , fromMsSinceEpoch
     , here
@@ -20,7 +21,6 @@ module Chrono.Moment exposing
     , seconds
     , toMsAfterEpoch
     , utc
-    , viewDuration
     , zoneWithSameOffset
     )
 
@@ -67,7 +67,7 @@ toMsAfterEpoch (Moment ms) =
 
 {-| Move the moment into the future for a duration.
 
-Do not use this to move days, weeks, or months. Use the date and time model for that.
+Do not use this to move days, weeks, or months. Use Date and GregorianCalendar for that.
 
 -}
 intoFuture : Duration -> Moment -> Moment
@@ -77,7 +77,7 @@ intoFuture (Duration durationInMs) (Moment momentInMs) =
 
 {-| Move the moment into the past for a duration.
 
-Do not use this to move days, weeks, or months. Use the date and time model for that.
+Do not use this to move days, weeks, or months. Use Date and GregorianCalendar for that.
 
 -}
 intoPast : Duration -> Moment -> Moment
@@ -110,7 +110,7 @@ chronologicalComparison (Moment m) (Moment n) =
 {-| Duration represents a laps of time. It is represented in the moment model,
 because we are thinking about actual elaps of specific milliseconds, seconds, minutes and hours.
 
-It has no way of describing days, because that belongs in the Date and Time model.
+It has no way of describing days, because one day is not always 24 hours.
 For example, moving 24 hours is not the same as moving a day. In Europe it is only
 the same in about 363 days a year, because of daylight time savings.
 
@@ -166,7 +166,7 @@ Example:
 
     hours 2
         |> and minutes 45
-        |> viewDuration
+        |> durationView
     --> { hours = 2, minutes = 45, seconds = 0, milliseconds = 0}
 
 -}
@@ -181,8 +181,8 @@ and fct value (Duration duration) =
 
 {-| Show the duration split up in milliseconds, seconds, minutes and hours.
 -}
-viewDuration : Duration -> { milliseconds : Int, seconds : Int, minutes : Int, hours : Int }
-viewDuration (Duration duration) =
+durationView : Duration -> { milliseconds : Int, seconds : Int, minutes : Int, hours : Int }
+durationView (Duration duration) =
     let
         ( wholeHours, withoutHours ) =
             substractWhole duration 3600000
