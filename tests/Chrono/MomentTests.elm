@@ -10,7 +10,7 @@ import Time
 
 all : Test
 all =
-    describe "Moments and Durations"
+    describe "Moments, Durations and TimeZones"
         [ describe "Moments and milliseconds since epoch should be interchangeable."
             [ fuzz Fuzz.int "A moment from milliseconds since epoch should be the same number of milliseconds since epoch." <|
                 \msSinceEpoch ->
@@ -83,4 +83,45 @@ all =
                         |> toMsAfterEpoch
                         |> Expect.equal (500 - 100015 - 75 * 1000 - 190 * 60000 - 20 * 3600000)
             ]
+        , describe "Details about Time Zones"
+            [ describe "relevantTimeZonePeriod"
+                [ fuzz2 fuzzMoment fuzzOffset "should have open start, open end and default offset when no era is defined" <|
+                    \aMoment anOffset ->
+                        aMoment
+                            |> relevantTimeZonePeriod (noEraZone anOffset)
+                            |> Expect.equal { start = Nothing, end = Nothing, offset = anOffset }
+                , fuzz3 fuzzEraStart fuzzOffset fuzzOffset "should have open end when last era is relevant" <|
+                    \aStart aDefaultOffset anOffset ->
+                        let
+                            startMoment =
+                                minutesToMoment aStart
+                        in
+                        startMoment
+                            |> intoFuture (hours 1)
+                            |> relevantTimeZonePeriod (customZone aDefaultOffset [ Era aStart anOffset ])
+                            |> Expect.equal { start = Just startMoment, end = Nothing, offset = anOffset }
+                , fuzz3 fuzzEraStart fuzzOffset fuzzOffset "should not have open ends when eras are defined around the moment" <|
+                    \aStart relevantOffset anOffset ->
+                        let
+                            aMoment =
+                                minutesToMoment (aStart + 60)
+
+                            anEnd =
+                                aStart + 120
+                        in
+                        aMoment
+                            |> relevantTimeZonePeriod (customZone anOffset [ Era aStart relevantOffset, Era anEnd anOffset ])
+                            |> Expect.equal { start = Just <| minutesToMoment aStart, end = Just <| minutesToMoment anEnd, offset = relevantOffset }
+                ]
+            ]
         ]
+
+
+noEraZone : Int -> TimeZone
+noEraZone offset =
+    customZone offset []
+
+
+minutesToMoment : Int -> Moment
+minutesToMoment =
+    minutesInMs >> fromMsSinceEpoch

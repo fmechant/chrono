@@ -1,6 +1,7 @@
 module Chrono.Moment exposing
     ( Direction(..)
     , Duration
+    , Era
     , Moment
     , TimeZone
     , and
@@ -18,6 +19,7 @@ module Chrono.Moment exposing
     , milliseconds
     , minutes
     , now
+    , relevantTimeZonePeriod
     , seconds
     , toMsAfterEpoch
     , utc
@@ -232,6 +234,9 @@ every (Duration duration) function =
 ---- TIMEZONE ----
 
 
+{-| We define a different time zone type than that defined in elm/time,
+because we need access to the offset.
+-}
 type TimeZone
     = TimeZone Int (List Era)
 
@@ -248,10 +253,18 @@ utc =
 
 
 customZone : Int -> List Era -> TimeZone
-customZone =
-    TimeZone
+customZone defaultOffset eras =
+    let
+        sortedEras =
+            List.sortBy .start eras
+    in
+    TimeZone defaultOffset sortedEras
 
 
+{-| A naïve implementation of transforming the elm/time Zone to this TimeZone.
+It only works on zones without an era. We need to find a way to deal with
+time zones that have eras.
+-}
 zoneWithSameOffset : CoreTime.Zone -> TimeZone
 zoneWithSameOffset zone =
     let
@@ -283,6 +296,29 @@ relevantOffset (TimeZone defaultOffset eras) ms =
 
             Nothing ->
                 defaultOffset
+
+
+{-| The relevant time zone period in the time zone for the moment.
+-}
+relevantTimeZonePeriod : TimeZone -> Moment -> { start : Maybe Moment, end : Maybe Moment, offset : Int }
+relevantTimeZonePeriod (TimeZone defaultOffset eras) (Moment ms) =
+    List.foldl
+        (\era { start, end, offset } ->
+            let
+                startInMs =
+                    minutesInMs era.start
+            in
+            if startInMs <= ms then
+                { start = Just <| Moment startInMs, end = Nothing, offset = era.offset }
+
+            else if end == Nothing then
+                { start = start, end = Just <| Moment startInMs, offset = offset }
+
+            else
+                { start = start, end = end, offset = offset }
+        )
+        { start = Nothing, end = Nothing, offset = defaultOffset }
+        eras
 
 
 here : Task x TimeZone

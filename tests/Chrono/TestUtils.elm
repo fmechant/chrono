@@ -3,11 +3,14 @@ module Chrono.TestUtils exposing
     , fuzzDate
     , fuzzDateDuration
     , fuzzDuration
+    , fuzzEraStart
     , fuzzMoment
     , fuzzMonth
     , fuzzNonZeroDuration
+    , fuzzOffset
     , fuzzThursday
     , fuzzYear
+    , minutesInMs
     )
 
 import Chrono.Date as Date exposing (Date)
@@ -25,6 +28,21 @@ fuzzDate =
 fuzzMoment : Fuzz.Fuzzer Moment
 fuzzMoment =
     Fuzz.map Moment.fromMsSinceEpoch <| Fuzz.intRange 0 Random.maxInt
+
+
+fuzzOffset : Fuzz.Fuzzer Int
+fuzzOffset =
+    Fuzz.map ((*) 15) <| Fuzz.intRange -48 48
+
+
+fuzzEraStart : Fuzz.Fuzzer Int
+fuzzEraStart =
+    Fuzz.intRange 0 (Random.maxInt // 60000)
+
+
+fuzzEra : Fuzz.Fuzzer Moment.Era
+fuzzEra =
+    Fuzz.map2 Moment.Era fuzzEraStart fuzzOffset
 
 
 fuzzDuration : Fuzz.Fuzzer Moment.Duration
@@ -66,3 +84,8 @@ daylightSavingsTimeZone moment =
             round <| (toFloat <| Moment.toMsAfterEpoch moment) / 60000
     in
     Moment.customZone 60 [ { start = start, offset = 120 } ]
+
+
+minutesInMs : Int -> Int
+minutesInMs value =
+    value * 60000
