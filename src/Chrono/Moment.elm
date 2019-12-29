@@ -287,17 +287,6 @@ zoneWithSameOffset zone =
     TimeZone offset []
 
 
-relevantOffset : TimeZone -> Int -> Int
-relevantOffset (TimeZone defaultOffset eras) ms =
-    minutesInMs <|
-        case List.head (List.filter (\era -> minutesInMs era.start < ms) eras) of
-            Just era ->
-                era.offset
-
-            Nothing ->
-                defaultOffset
-
-
 {-| The relevant time zone period in the time zone for the moment.
 -}
 relevantTimeZonePeriod : TimeZone -> Moment -> { start : Maybe Moment, end : Maybe Moment, offset : Int }
@@ -353,8 +342,11 @@ intoFutureForZone zone moment =
     let
         ms =
             toMsAfterEpoch moment
+
+        relevantPeriod =
+            relevantTimeZonePeriod zone moment
     in
-    fromMsSinceEpoch (ms + relevantOffset zone ms)
+    fromMsSinceEpoch (ms + minutesInMs relevantPeriod.offset)
 
 
 {-| Don't use this. Only useful for internal calculations in Date and Time.
@@ -364,5 +356,8 @@ intoPastForZone zone moment =
     let
         ms =
             toMsAfterEpoch moment
+
+        relevantPeriod =
+            relevantTimeZonePeriod zone moment
     in
-    fromMsSinceEpoch (ms - relevantOffset zone ms)
+    fromMsSinceEpoch (ms - minutesInMs relevantPeriod.offset)
