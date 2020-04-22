@@ -336,7 +336,25 @@ and fct value (Duration duration) =
 
 
 {-| Show the duration split up in weeks and days.
-Typically used in the view.
+
+Typically used to create your own specific view.
+Example:
+
+    viewDaysAndWeeksShort duration =
+        let
+            daysAndWeeks =
+                viewDuration duration
+        in
+        case ( daysAndWeeks.weeks, daysAndWeeks.days ) of
+            ( 0, 0 ) ->
+                "0"
+
+            ( 0, noDays ) ->
+                String.fromInt noDays ++ "d"
+
+            ( noWeeks, noDays ) ->
+                String.fromInt noWeeks ++ "w " ++ String.fromInt noDays ++ "d"
+
 -}
 viewDuration : Duration -> { days : Int, weeks : Int }
 viewDuration (Duration totalDays) =
