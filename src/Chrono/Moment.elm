@@ -8,6 +8,7 @@ module Chrono.Moment exposing
     , chronologicalComparison
     , customZone
     , durationView
+    , earliest
     , elapsed
     , fromMsSinceEpoch
     , here
@@ -87,6 +88,13 @@ intoPast (Duration durationInMs) (Moment momentInMs) =
     Moment <| momentInMs - durationInMs
 
 
+{-| Get the moment that happened first.
+-}
+earliest : Moment -> Moment -> Moment
+earliest (Moment ms) (Moment ms2) =
+    Moment (min ms ms2)
+
+
 {-| Compare two moments chronologically. Typically used with `List.sortWith`.
 
     import List
@@ -113,6 +121,9 @@ chronologicalComparison (Moment m) (Moment n) =
 because we are thinking about actual elaps of specific milliseconds, seconds, minutes and hours.
 
 It has no way of describing days, because one day is not always 24 hours.
+Use Date and GregorianCalendar for describing days, weeks, months, years.
+
+Duration has no way of describing days, because one day is not always 24 hours.
 For example, moving 24 hours is not the same as moving a day. In Europe it is only
 the same in about 363 days a year, because of daylight time savings.
 
@@ -182,6 +193,9 @@ and fct value (Duration duration) =
 
 
 {-| Show the duration split up in milliseconds, seconds, minutes and hours.
+
+Typically used to create your own specific view of the duration.
+
 -}
 durationView : Duration -> { milliseconds : Int, seconds : Int, minutes : Int, hours : Int }
 durationView (Duration duration) =
@@ -201,6 +215,7 @@ durationView (Duration duration) =
 {-| How much time has elapsed between the moments.
 
 The result is a duration, without the indication whether one moment is in the future
+The result is a duration, with the indication whether one moment is in the future
 or in the past regarding to the other moment.
 
 -}

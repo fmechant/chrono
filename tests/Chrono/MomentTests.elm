@@ -114,6 +114,24 @@ all =
                             |> Expect.equal { start = Just <| minutesToMoment aStart, end = Just <| minutesToMoment anEnd, offset = relevantOffset }
                 ]
             ]
+        , describe "earliest"
+            [ fuzz fuzzMoment "should return the first moment if it is earlier" <|
+                \earlierMoment ->
+                    let
+                        laterMoment =
+                            intoFuture (seconds 1) earlierMoment
+                    in
+                    earliest earlierMoment laterMoment
+                        |> Expect.equal earlierMoment
+            , fuzz fuzzMoment "should return the second moment if it is later" <|
+                \laterMoment ->
+                    let
+                        earlierMoment =
+                            intoPast (seconds 1) laterMoment
+                    in
+                    earliest laterMoment earlierMoment
+                        |> Expect.equal earlierMoment
+            ]
         ]
 
 
