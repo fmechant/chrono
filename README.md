@@ -40,6 +40,18 @@ Cal.toDate { day = 30, month = Cal.May, year = 2019  }
 --> Cal.toDate { day = 29, month = Cal.February, year = 2020  }
 ```
 
+You can see what date it is by using `today`.
+```
+import Chrono.Date as Date exposing (Date)
+
+type Msg
+    = ReceivedDate Date
+    
+getDate : Cmd Msg
+getDate =
+    Task.perform ReceivedDate Date.today
+```
+
 ## Moments in Time
 It also provides a way to specify a specific moment in time.
 
