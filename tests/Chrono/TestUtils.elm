@@ -102,6 +102,10 @@ fuzzTimeZoneWithPeriod =
     Fuzz.map4 ftz fuzzMoment fuzzDateAndTime fuzzNonZeroTimeLapse fuzzDateAndTime
 
 
+
+---- EPOCH RELATED ----
+
+
 epoch : Moment
 epoch =
     Moment.fromMsSinceEpoch 0

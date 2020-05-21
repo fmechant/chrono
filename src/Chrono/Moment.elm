@@ -29,6 +29,9 @@ this sentence.
 Here, the concepts seconds, minutes, hours make sense. If you are looking for
 concepts like days, week, months or years, look into Date and GregorianCalendar.
 
+If you are looking for TimeZone, it is part of the Date module, because time
+zones define the mapping between a moment and a date/time.
+
 -}
 
 import Task exposing (Task)
