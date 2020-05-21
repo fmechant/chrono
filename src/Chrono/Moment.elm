@@ -6,6 +6,7 @@ module Chrono.Moment exposing
     , chronologicalComparison
     , earliest
     , elapsed
+    , every
     , fromMsSinceEpoch
     , hours
     , intoFuture
@@ -18,8 +19,16 @@ module Chrono.Moment exposing
     , toMsAfterEpoch
     )
 
-{-| The moment model represents specific moments in time. For example, the moment you
+{-| The Moment represents a specific moment in time. For example, the moment you
 first started reading this sentence.
+
+TimeLapses represent a specific time lapse between two moments. For example, the
+time lapse between starting to read the first sentence, and the start of reading
+this sentence.
+
+Here, the concepts seconds, minutes, hours make sense. If you are looking for
+concepts like days, week, months or years, look into Date and GregorianCalendar.
+
 -}
 
 import Task exposing (Task)
@@ -33,6 +42,19 @@ type Moment
 
 
 {-| Get the current moment when this task is run.
+
+This is typically used with the Elm architecture, like this:
+
+    import Task
+
+    type Msg
+        = SystemGotNow Moment
+
+    update msg model =
+        case msg of
+            _ ->
+                ( model, Task.perform SystemGotNow now )
+
 -}
 now : Task x Moment
 now =
@@ -42,6 +64,7 @@ now =
 {-| Get the moment that occured the number of milliseconds after the epoch.
 
 Typically only used when receiving a moment that was previously exported.
+Avoid using this for calculations, let this library do the hard work for you.
 
 -}
 fromMsSinceEpoch : Int -> Moment
@@ -51,7 +74,8 @@ fromMsSinceEpoch ms =
 
 {-| Get the number of milliseconds after the epoch that this moment occured.
 
-Do not use this for calculations, only for exporting the moment.
+Typically only used for exporting the moment.
+Avoid using this for calculations, let this library do the hard work for you.
 
 -}
 toMsAfterEpoch : Moment -> Int
@@ -61,7 +85,8 @@ toMsAfterEpoch (Moment ms) =
 
 {-| Move the moment into the future for a time lapse.
 
-Do not use this to move days, weeks, or months. Use Date and GregorianCalendar for that.
+If you want to move days, weeks, months or years, use Date or GregorianCalendar
+for that.
 
 -}
 intoFuture : TimeLapse -> Moment -> Moment
@@ -71,7 +96,8 @@ intoFuture (TimeLapse lapseInMs) (Moment momentInMs) =
 
 {-| Move the moment into the past for a time lapse.
 
-Do not use this to move days, weeks, or months. Use Date and GregorianCalendar for that.
+If you want to move days, weeks, months or years, use Date or GregorianCalendar
+for that.
 
 -}
 intoPast : TimeLapse -> Moment -> Moment
@@ -108,21 +134,24 @@ chronologicalComparison (Moment m) (Moment n) =
 ---- TimeLapse ----
 
 
-{-| TimeLapse represents a lapse of time. It is represented in the moment module,
-because we are thinking about actual elaps of specific milliseconds, seconds, minutes and hours.
+{-| TimeLapse represents a lapse of time. It is represented in the moment
+module, because we are thinking about actual elaps of specific milliseconds,
+seconds, minutes and hours.
 
 TimeLapse has no way of describing days, because one day is not always 24 hours.
-For example, moving 24 hours is not the same as moving a day. In Europe it is only
-the same in about 363 days a year, because of daylight time savings.
-Use Date and GregorianCalendar for describing an elaps of days, weeks, months, years.
+For example, moving 24 hours is not the same as moving a day. In Europe it is
+only the same in about 363 days a year, because of daylight time savings.
+
+If you want to describe duration of days, weeks, months or years, use Date or
+GregorianCalendar for that.
 
 -}
 type TimeLapse
     = TimeLapse Int
 
 
-{-| Direction represents the relative position of one moment regarding another moment,
-whether it is into the future, or into the past.
+{-| Direction represents the relative position of one moment regarding another
+moment, whether it is into the future, or into the past.
 -}
 type Direction
     = IntoTheFuture
@@ -163,7 +192,9 @@ hours value =
 
 {-| Combine two time lapses.
 
-It has an odd signiture to be able to efficiently use it using the pipe (|>) operator.
+It has an odd signiture to be able to efficiently use it using the pipe (|>)
+operator.
+
 Example:
 
     hours 2
@@ -185,10 +216,31 @@ and fct value (TimeLapse timeLapse) =
 
 Typically used to create your own specific view of the time lapse.
 
+    let
+        myTimeLapseView timeLapse =
+            let
+                {hours, minutes} = timeLapseView timeLapse
+            in
+            String.fromInt hours ++ ":" ++ String.fromInt minutes
+    in
+    hours 5
+        |> and minutes 45
+        |> myTimeLapseView
+        --> "5:45"
+
 -}
 timeLapseView : TimeLapse -> { milliseconds : Int, seconds : Int, minutes : Int, hours : Int }
 timeLapseView (TimeLapse timeLapse) =
     let
+        -- Subtract the whole part, when dividing by the factor, and return the whole part, and the remaining value.
+        substractWhole : Int -> Int -> ( Int, Int )
+        substractWhole value factor =
+            let
+                whole =
+                    value // factor
+            in
+            ( whole, value - whole * factor )
+
         ( wholeHours, withoutHours ) =
             substractWhole timeLapse 3600000
 
@@ -223,7 +275,7 @@ elapsed (Moment from) (Moment to) =
     ( TimeLapse <| abs diff, dir )
 
 
-{-| Get the current moment, every duration.
+{-| Get the current moment, every time lapse.
 
 If it is unclear to you why it returns a Sub, please review the Elm architecture.
 
@@ -231,18 +283,3 @@ If it is unclear to you why it returns a Sub, please review the Elm architecture
 every : TimeLapse -> (Moment -> msg) -> Sub msg
 every (TimeLapse timeLapse) function =
     CoreTime.every (toFloat timeLapse) (CoreTime.posixToMillis >> fromMsSinceEpoch >> function)
-
-
-
----- HELPER FUNCTIONS ----
-
-
-{-| Subtract the whole part, when dividing by the factor, and return the whole part, and the remaining value.
--}
-substractWhole : Int -> Int -> ( Int, Int )
-substractWhole value factor =
-    let
-        whole =
-            value // factor
-    in
-    ( whole, value - whole * factor )

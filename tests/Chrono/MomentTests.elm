@@ -40,13 +40,15 @@ all =
                         |> and hours 20
                         |> timeLapseView
                         |> Expect.equal { milliseconds = 15, seconds = 55, minutes = 12, hours = 23 }
-            , fuzz2 fuzzMoment fuzzTimeLapse "elapsed should return a timeLapse that gives the moment if we move it into the future" <|
+            ]
+        , describe "Elapsed"
+            [ fuzz2 fuzzMoment fuzzTimeLapse "should return a timeLapse that gives the moment if we move it into the future" <|
                 \moment timeLapse ->
                     moment
                         |> intoFuture timeLapse
                         |> elapsed moment
                         |> Expect.equal ( timeLapse, IntoTheFuture )
-            , fuzz2 fuzzMoment fuzzNonZeroTimeLapse "elapsed should return a timeLapse that gives the moment if we move it into the past" <|
+            , fuzz2 fuzzMoment fuzzNonZeroTimeLapse "should return a timeLapse that gives the moment if we move it into the past" <|
                 \moment timeLapse ->
                     moment
                         |> intoPast timeLapse
