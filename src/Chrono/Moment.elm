@@ -1,33 +1,24 @@
 module Chrono.Moment exposing
     ( Direction(..)
-    , Duration
-    , Era
     , Moment
-    , TimeZone
+    , TimeLapse(..)
     , and
     , chronologicalComparison
-    , customZone
-    , durationView
     , earliest
     , elapsed
     , fromMsSinceEpoch
-    , here
     , hours
     , intoFuture
-    , intoFutureForZone
     , intoPast
-    , intoPastForZone
     , milliseconds
     , minutes
     , now
-    , relevantTimeZonePeriod
     , seconds
+    , timeLapseView
     , toMsAfterEpoch
-    , utc
-    , zoneWithSameOffset
     )
 
-{-| The moment model represents specific moments in time. For example the moment you
+{-| The moment model represents specific moments in time. For example, the moment you
 first started reading this sentence.
 -}
 
@@ -68,24 +59,24 @@ toMsAfterEpoch (Moment ms) =
     ms
 
 
-{-| Move the moment into the future for a duration.
+{-| Move the moment into the future for a time lapse.
 
 Do not use this to move days, weeks, or months. Use Date and GregorianCalendar for that.
 
 -}
-intoFuture : Duration -> Moment -> Moment
-intoFuture (Duration durationInMs) (Moment momentInMs) =
-    Moment <| momentInMs + durationInMs
+intoFuture : TimeLapse -> Moment -> Moment
+intoFuture (TimeLapse lapseInMs) (Moment momentInMs) =
+    Moment <| momentInMs + lapseInMs
 
 
-{-| Move the moment into the past for a duration.
+{-| Move the moment into the past for a time lapse.
 
 Do not use this to move days, weeks, or months. Use Date and GregorianCalendar for that.
 
 -}
-intoPast : Duration -> Moment -> Moment
-intoPast (Duration durationInMs) (Moment momentInMs) =
-    Moment <| momentInMs - durationInMs
+intoPast : TimeLapse -> Moment -> Moment
+intoPast (TimeLapse lapseInMs) (Moment momentInMs) =
+    Moment <| momentInMs - lapseInMs
 
 
 {-| Get the moment that happened first.
@@ -114,22 +105,20 @@ chronologicalComparison (Moment m) (Moment n) =
 
 
 
----- DURATION ----
+---- TimeLapse ----
 
 
-{-| Duration represents a laps of time. It is represented in the moment model,
+{-| TimeLapse represents a lapse of time. It is represented in the moment module,
 because we are thinking about actual elaps of specific milliseconds, seconds, minutes and hours.
 
-It has no way of describing days, because one day is not always 24 hours.
-Use Date and GregorianCalendar for describing days, weeks, months, years.
-
-Duration has no way of describing days, because one day is not always 24 hours.
+TimeLapse has no way of describing days, because one day is not always 24 hours.
 For example, moving 24 hours is not the same as moving a day. In Europe it is only
 the same in about 363 days a year, because of daylight time savings.
+Use Date and GregorianCalendar for describing an elaps of days, weeks, months, years.
 
 -}
-type Duration
-    = Duration Int
+type TimeLapse
+    = TimeLapse Int
 
 
 {-| Direction represents the relative position of one moment regarding another moment,
@@ -140,68 +129,68 @@ type Direction
     | IntoThePast
 
 
-{-| A duration of some milliseconds.
+{-| A time lapse of some milliseconds.
 Only use positive values, if you want your code to be predictable.
 -}
-milliseconds : Int -> Duration
+milliseconds : Int -> TimeLapse
 milliseconds value =
-    Duration value
+    TimeLapse value
 
 
-{-| A duration of some seconds.
+{-| A time lapse of some seconds.
 Only use positive values, if you want your code to be predictable.
 -}
-seconds : Int -> Duration
+seconds : Int -> TimeLapse
 seconds value =
     milliseconds <| value * 1000
 
 
-{-| A duration of some minutes.
+{-| A time lapse of some minutes.
 Only use positive values, if you want your code to be predictable.
 -}
-minutes : Int -> Duration
+minutes : Int -> TimeLapse
 minutes value =
     seconds <| value * 60
 
 
-{-| A duration of some hours.
+{-| A time lapse of some hours.
 Only use positive values, if you want your code to be predictable.
 -}
-hours : Int -> Duration
+hours : Int -> TimeLapse
 hours value =
     minutes <| value * 60
 
 
-{-| Combine two durations.
+{-| Combine two time lapses.
 
 It has an odd signiture to be able to efficiently use it using the pipe (|>) operator.
 Example:
 
     hours 2
         |> and minutes 45
-        |> durationView
+        |> timeLapseView
     --> { hours = 2, minutes = 45, seconds = 0, milliseconds = 0}
 
 -}
-and : (Int -> Duration) -> Int -> Duration -> Duration
-and fct value (Duration duration) =
+and : (Int -> TimeLapse) -> Int -> TimeLapse -> TimeLapse
+and fct value (TimeLapse timeLapse) =
     let
-        (Duration toAdd) =
+        (TimeLapse toAdd) =
             fct value
     in
-    Duration (duration + toAdd)
+    TimeLapse (timeLapse + toAdd)
 
 
-{-| Show the duration split up in milliseconds, seconds, minutes and hours.
+{-| Show the time lapse split up in milliseconds, seconds, minutes and hours.
 
-Typically used to create your own specific view of the duration.
+Typically used to create your own specific view of the time lapse.
 
 -}
-durationView : Duration -> { milliseconds : Int, seconds : Int, minutes : Int, hours : Int }
-durationView (Duration duration) =
+timeLapseView : TimeLapse -> { milliseconds : Int, seconds : Int, minutes : Int, hours : Int }
+timeLapseView (TimeLapse timeLapse) =
     let
         ( wholeHours, withoutHours ) =
-            substractWhole duration 3600000
+            substractWhole timeLapse 3600000
 
         ( wholeMinutes, withoutMinutes ) =
             substractWhole withoutHours 60000
@@ -214,12 +203,11 @@ durationView (Duration duration) =
 
 {-| How much time has elapsed between the moments.
 
-The result is a duration, without the indication whether one moment is in the future
-The result is a duration, with the indication whether one moment is in the future
+The result is a time lapse, with the indication whether one moment is in the future
 or in the past regarding to the other moment.
 
 -}
-elapsed : Moment -> Moment -> ( Duration, Direction )
+elapsed : Moment -> Moment -> ( TimeLapse, Direction )
 elapsed (Moment from) (Moment to) =
     let
         diff =
@@ -232,7 +220,7 @@ elapsed (Moment from) (Moment to) =
             else
                 IntoTheFuture
     in
-    ( Duration <| abs diff, dir )
+    ( TimeLapse <| abs diff, dir )
 
 
 {-| Get the current moment, every duration.
@@ -240,103 +228,13 @@ elapsed (Moment from) (Moment to) =
 If it is unclear to you why it returns a Sub, please review the Elm architecture.
 
 -}
-every : Duration -> (Moment -> msg) -> Sub msg
-every (Duration duration) function =
-    CoreTime.every (toFloat duration) (CoreTime.posixToMillis >> fromMsSinceEpoch >> function)
-
-
-
----- TIMEZONE ----
-
-
-{-| We define a different time zone type than that defined in elm/time,
-because we need access to the offset.
--}
-type TimeZone
-    = TimeZone Int (List Era)
-
-
-type alias Era =
-    { start : Int
-    , offset : Int
-    }
-
-
-utc : TimeZone
-utc =
-    TimeZone 0 []
-
-
-customZone : Int -> List Era -> TimeZone
-customZone defaultOffset eras =
-    let
-        sortedEras =
-            List.sortBy .start eras
-    in
-    TimeZone defaultOffset sortedEras
-
-
-{-| A naïve implementation of transforming the elm/time Zone to this TimeZone.
-It only works on zones without an era. We need to find a way to deal with
-time zones that have eras.
--}
-zoneWithSameOffset : CoreTime.Zone -> TimeZone
-zoneWithSameOffset zone =
-    let
-        day =
-            CoreTime.toDay zone (CoreTime.millisToPosix 0)
-
-        hour =
-            CoreTime.toHour zone (CoreTime.millisToPosix 0)
-
-        minute =
-            CoreTime.toMinute zone (CoreTime.millisToPosix 0)
-
-        offset =
-            if day == 1 then
-                hour * 60 + minute
-
-            else
-                (hour - 24) * 60 + minute
-    in
-    TimeZone offset []
-
-
-{-| The relevant time zone period in the time zone for the moment.
--}
-relevantTimeZonePeriod : TimeZone -> Moment -> { start : Maybe Moment, end : Maybe Moment, offset : Int }
-relevantTimeZonePeriod (TimeZone defaultOffset eras) (Moment ms) =
-    List.foldl
-        (\era { start, end, offset } ->
-            let
-                startInMs =
-                    minutesInMs era.start
-            in
-            if startInMs <= ms then
-                { start = Just <| Moment startInMs, end = Nothing, offset = era.offset }
-
-            else if end == Nothing then
-                { start = start, end = Just <| Moment startInMs, offset = offset }
-
-            else
-                { start = start, end = end, offset = offset }
-        )
-        { start = Nothing, end = Nothing, offset = defaultOffset }
-        eras
-
-
-here : Task x TimeZone
-here =
-    Task.map zoneWithSameOffset CoreTime.here
+every : TimeLapse -> (Moment -> msg) -> Sub msg
+every (TimeLapse timeLapse) function =
+    CoreTime.every (toFloat timeLapse) (CoreTime.posixToMillis >> fromMsSinceEpoch >> function)
 
 
 
 ---- HELPER FUNCTIONS ----
-
-
-minutesInMs : Int -> Int
-minutesInMs value =
-    value * 60000
 
 
 {-| Subtract the whole part, when dividing by the factor, and return the whole part, and the remaining value.
@@ -348,31 +246,3 @@ substractWhole value factor =
             value // factor
     in
     ( whole, value - whole * factor )
-
-
-{-| Don't use this. Only useful for internal calculations in Date and Time.
--}
-intoFutureForZone : TimeZone -> Moment -> Moment
-intoFutureForZone zone moment =
-    let
-        ms =
-            toMsAfterEpoch moment
-
-        relevantPeriod =
-            relevantTimeZonePeriod zone moment
-    in
-    fromMsSinceEpoch (ms + minutesInMs relevantPeriod.offset)
-
-
-{-| Don't use this. Only useful for internal calculations in Date and Time.
--}
-intoPastForZone : TimeZone -> Moment -> Moment
-intoPastForZone zone moment =
-    let
-        ms =
-            toMsAfterEpoch moment
-
-        relevantPeriod =
-            relevantTimeZonePeriod zone moment
-    in
-    fromMsSinceEpoch (ms - minutesInMs relevantPeriod.offset)

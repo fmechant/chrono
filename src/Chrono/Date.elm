@@ -1,41 +1,63 @@
 module Chrono.Date exposing
     ( Date
+    , DateAndTime
     , Duration
+    , Hour
+    , Mapping
+    , Meridiem(..)
+    , Period
+    , Time
+    , TimeZone(..)
     , Weekday(..)
+    , am
     , and
-    , chronologicalComparison
+    , chronologicalDateComparison
+    , chronologicalTimeComparison
     , collect
+    , customZone
     , days
+    , durationView
     , elapsed
     , fromJDN
-    , fromMoment
+    , fromMsSinceNoon
+    , h24
+    , here
     , intoFuture
     , intoPast
     , last
+    , m
+    , midnight
+    , ms
     , next
+    , noon
+    , now
+    , pm
+    , timeView
+    , to12Hours
+    , toDateAndTime
     , toJDN
+    , toMoment
+    , toMsSinceNoon
     , toNoon
     , toWeekday
     , toWeekdayNumber
-    , viewDuration
+    , utc
     , weeks
+    , withTime
+    , zoneWithSameOffset
     )
 
-{-| A date is an abstract understanding of a period of time.
-It is independent of a time zone.
-
-Mark that the concept of the date is independent of the Calendar one
-uses.
-
--}
-
-import Chrono.Moment as Moment exposing (Moment, TimeZone)
-import Chrono.Time exposing (Time)
+import Chrono.Moment as Moment exposing (Direction(..), Moment)
 import Task exposing (Task)
 import Time as CoreTime
 
 
+
+---- Date ----
+
+
 {-| A date is an abstract understanding of a period of time.
+It is independent of a time zone or a calendar.
 
 The internal representation of the Date is the Julian Day Number.
 This is the number of days since the Julian day number 0, which is
@@ -45,15 +67,6 @@ November 24, 4714 BC, in the proleptic Gregorian calendar.
 -}
 type Date
     = JDN Int
-
-
-{-| Get the date at the moment when this task is run and in the time zone
-where this task is run.
--}
-today : Task x Date
-today =
-    Task.map2 fromMoment (Task.map Moment.zoneWithSameOffset CoreTime.here) <|
-        Task.map (Moment.fromMsSinceEpoch << CoreTime.posixToMillis) CoreTime.now
 
 
 {-| Create the date that corresponds to the Julian Day Number.
@@ -71,37 +84,63 @@ toJDN (JDN jdn) =
     jdn
 
 
-{-| Find out the date at this moment, in this time zone.
+{-| Maps a moment to a date/time, when the moment is inside a period with a
+specific mapping.
+
+It is used internally to find the date in a period.
+
+It assumes the moment is inside the period, because it depends on a
+one-to-one relationship (bijection) between moments and date/time.
+Inside a period, this is correct.
+
 -}
-fromMoment : TimeZone -> Moment -> Date
-fromMoment zone moment =
+map : Mapping -> Moment -> DateAndTime
+map start moment =
     let
-        shiftedPosix =
-            Moment.toMsAfterEpoch <|
-                Moment.intoFutureForZone zone moment
+        ( Moment.TimeLapse sinceStart, direction ) =
+            Moment.elapsed start.moment moment
 
-        positiveJdn =
-            shiftedPosix // 86400000 + 2440588
+        ( daysInFuture, msInFuture ) =
+            substractWhole sinceStart twentyFourHoursInMs
 
-        jdn =
-            if shiftedPosix < 0 then
-                positiveJdn - 1
-
-            else
-                positiveJdn
+        (Time startTime) =
+            start.dateTime.time
     in
-    JDN jdn
+    case direction of
+        Moment.IntoTheFuture ->
+            let
+                startSecondsTillNextDay =
+                    twelveHoursInMs - startTime
+            in
+            case msInFuture > startSecondsTillNextDay of
+                True ->
+                    intoFuture (days (daysInFuture + 1)) start.dateTime.date
+                        |> withTime (fromMsSinceNoon ((startTime + msInFuture) - twentyFourHoursInMs))
+
+                False ->
+                    intoFuture (days daysInFuture) start.dateTime.date
+                        |> withTime (fromMsSinceNoon (startTime + msInFuture))
+
+        Moment.IntoThePast ->
+            let
+                startSecondsTillPreviousDay =
+                    startTime + twelveHoursInMs
+            in
+            case msInFuture > startSecondsTillPreviousDay of
+                True ->
+                    intoPast (days (daysInFuture + 1)) start.dateTime.date
+                        |> withTime (fromMsSinceNoon (twentyFourHoursInMs + startTime - msInFuture))
+
+                False ->
+                    intoPast (days daysInFuture) start.dateTime.date
+                        |> withTime (fromMsSinceNoon (startTime - msInFuture))
 
 
-{-| Get the moment at noon of this date, in this time zone.
+{-| The epoch date is the date that started the moment epoch.
 -}
-toNoon : TimeZone -> Date -> Moment
-toNoon zone (JDN jdn) =
-    let
-        noonInUtc =
-            Moment.fromMsSinceEpoch <| (jdn - 2440588) * 86400000 + 43200000
-    in
-    Moment.intoPastForZone zone noonInUtc
+epochDate : Date
+epochDate =
+    JDN 2440588
 
 
 {-| Compare two dates chronologically. Typically used with `List.sortWith`.
@@ -115,12 +154,12 @@ Example:
         later = intoFuture (days 5) base
         earlier = intoPast (days 20) base
     in
-    [earlier, base, later] == List.sortWith chronologicalComparison [later, earlier, base]
+    [earlier, base, later] == List.sortWith chronologicalDateComparison [later, earlier, base]
     --> True
 
 -}
-chronologicalComparison : Date -> Date -> Order
-chronologicalComparison (JDN d) (JDN e) =
+chronologicalDateComparison : Date -> Date -> Order
+chronologicalDateComparison (JDN d) (JDN e) =
     compare d e
 
 
@@ -295,7 +334,7 @@ collect length toNext date =
 ---- Duration ----
 
 
-{-| Duration represents a laps of time. It is represented in the date and time model,
+{-| Duration represents a lapse of time. It is represented in the date and time model,
 because we are thinking about actual elaps of specific days and/or weeks.
 -}
 type Duration
@@ -356,8 +395,8 @@ Example:
                 String.fromInt noWeeks ++ "w " ++ String.fromInt noDays ++ "d"
 
 -}
-viewDuration : Duration -> { days : Int, weeks : Int }
-viewDuration (Duration totalDays) =
+durationView : Duration -> { days : Int, weeks : Int }
+durationView (Duration totalDays) =
     let
         numberOfWeeks =
             totalDays // 7
@@ -367,10 +406,650 @@ viewDuration (Duration totalDays) =
 
 {-| How many days have elapsed between the dates.
 
-The result is a duration, without the indication whether one date is in the future
+The result is a duration, with the indication whether one date is in the future
 or in the past regarding to the other date.
 
 -}
-elapsed : Date -> Date -> Duration
+elapsed : Date -> Date -> ( Duration, Direction )
 elapsed (JDN from) (JDN to) =
-    days <| abs <| to - from
+    let
+        diff =
+            to - from
+
+        dir =
+            if diff < 0 then
+                IntoThePast
+
+            else
+                IntoTheFuture
+    in
+    ( days <| abs <| diff, dir )
+
+
+
+---- Time ----
+
+
+{-| A specific time of the day, like 14:00:00 or 6:00 PM.
+
+You can get the time from a moment, using a time zone.
+You can create a time using 12 hours or 24 hours notation.
+
+It also contains a function to timeView the time and to chronologically compare times.
+
+
+# What about time travel?
+
+There are no functions to travel in time, because of the potential errors involved.
+When we add two hours to 01:00, we expect 3:00, but that is not always what we want,
+because of daylight savings.
+
+The only way to travel through time is using either moments or dates. If you want
+to have the time two hours later, you use Moment. If you want the hour to be two higher,
+you use Date.
+
+Example:
+Suppose you are at 2019-03-21 01:00:00 GMT+01:00 DST, right before the daylight-savings
+switch. What does going 2 hours in the future mean?
+
+Using moment (switch of daylight-savings time on 2019-03-21 03:00:00 GMT+02:00 DST):
+
+    import Chrono.Moment as Moment
+
+    let
+        switchMoment =
+            -- 2019-03-21 03:00:00 GMT+02:00 DST
+            Moment.fromMsSinceEpoch 1553994000000
+        switchDate =
+            fromJDN 2458574
+        zone =
+            customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = fromJDN 2440588, time = h24 1 |> m 0 } }
+                [ { start = { moment = switchMoment, dateTime = { date = switchDate, time = h24 3 |> m 0 } } } ]
+        oneAClock =
+            h24 1 |> m 0
+    in
+    switchDate
+        |> withTime oneAClock
+        |> toMoment zone
+        |> Moment.intoFuture (Moment.hours 2)
+        |> toDateAndTime zone
+        |> .time
+        --> h24 4 |> m 0
+
+Using date:
+
+    import Chrono.Moment as Moment
+
+    let
+        switchMoment =
+            -- 2019-03-21 03:00:00 GMT+02:00 DST
+            Moment.fromMsSinceEpoch 1553994000000
+        switchDate =
+            fromJDN 2458564
+        zone =
+            customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = fromJDN 2440588, time = h24 1 |> m 0 } }
+                [ { start = { moment = switchMoment, dateTime = { date = switchDate, time = h24 3 |> m 0 } } } ]
+        threeAClock =
+            h24 3 |> m 0
+    in
+    switchDate
+        |> withTime threeAClock
+        |> .time
+        --> h24 3 |> m 0
+
+-}
+type Time
+    = Time Int -- The number of milliseconds from noon (12:00).
+
+
+{-| An incomplete time type that only contains the hour of the time.
+Use m to complete it to a Time type.
+
+Use am, pm or h24 to create it.
+
+-}
+type Hour
+    = Hour Int
+
+
+fromMsSinceNoon : Int -> Time
+fromMsSinceNoon =
+    Time
+
+
+{-| Get the milliseconds since noon.
+-}
+toMsSinceNoon : Time -> Int
+toMsSinceNoon (Time milliseconds) =
+    milliseconds
+
+
+{-| Construct the time using an hour AM.
+It needs m to make it a complete Time.
+
+Values below 1 are considered as 1, values above 12 are considered as 12.
+
+12:00 AM is midnight.
+
+Example:
+
+    am 7 |> m 15 -- 07:15:00,000
+        |> timeView
+    --> {hour24 = 7, minute = 15, second = 0, millisecond = 0}
+
+-}
+am : Int -> Hour
+am =
+    clamp 1 12 >> midnightNoonCorrection >> h24
+
+
+{-| Construct the time using an hour PM.
+It needs m to make it a complete Time.
+
+Values below 1 are considered as 1, values above 12 are considered as 12.
+
+12:00 PM is noon.
+
+Example:
+
+    pm 7 |> m 15 -- 19:15:00,000
+        |> timeView
+    --> {hour24 = 19, minute = 15, second = 0, millisecond = 0}
+
+-}
+pm : Int -> Hour
+pm =
+    clamp 1 12 >> midnightNoonCorrection >> (+) 12 >> h24
+
+
+{-| The correction to make sure 12:00 AM is midnight and 12:00 PM is noon.
+-}
+midnightNoonCorrection : Int -> Int
+midnightNoonCorrection int =
+    case int of
+        12 ->
+            0
+
+        _ ->
+            int
+
+
+{-| Construct the time using an hour on the 24-hours clock.
+It needs m to make it a complete Time.
+
+We avoid using 24 because of the confusion involved.
+So, midnight is 0:00:00,000 and not 24:00:00,000.
+
+Values below 0 are considered as 0, values above 23 are considered as 23.
+
+Example:
+
+    h24 19 |> m 15 -- 19:15:00,000
+        |> timeView
+    --> {hour24 = 19, minute = 15, second = 0, millisecond = 0}
+
+-}
+h24 : Int -> Hour
+h24 value =
+    Hour <| (clamp 0 23 value - 12)
+
+
+{-| Add minutes to the hour to make it a Time.
+
+Example:
+
+    am 7 |> m 15 -- 7:15:00,000
+        |> timeView
+    --> {hour24 = 7, minute = 15, second = 0, millisecond = 0}
+
+-}
+m : Int -> Hour -> Time
+m value (Hour hour) =
+    Time <| (hour * 60 + clamp 0 59 value) * 60000
+
+
+{-| Takes the hours and minutes of the time and adds the milliseconds.
+The previous value of milliseconds is overridden.
+So:
+
+    (h24 13 |> m 5 |> ms 100) |> ms 45 --> h24 13 |> m 5 |> ms 45
+
+We opted for this solution so it is not necessary to use ms, if you do not need it.
+Most problems do not need milliseconds.
+
+-}
+ms : Int -> Time -> Time
+ms value (Time time) =
+    Time <| floor (toFloat time / 60000) * 60000 + clamp 0 60000 value
+
+
+{-| Get the time for noon.
+-}
+noon : Time
+noon =
+    Time 0
+
+
+{-| Get the time for midnight.
+
+Returns 00:00:00. (We avoid 24:00:00 because of ambiguity.)
+
+-}
+midnight : Time
+midnight =
+    Time (-12 * oneHourInMs)
+
+
+{-| Compare two times chronologically. Typically used with `List.sortWith`.
+
+    import List
+
+    let
+        base = noon
+        later = h24 14 |> m 0
+        earlier = h24 3 |> m 30
+    in
+    [earlier, base, later] == List.sortWith chronologicalTimeComparison [later, earlier, base]
+    --> True
+
+-}
+chronologicalTimeComparison : Time -> Time -> Order
+chronologicalTimeComparison (Time t) (Time u) =
+    compare t u
+
+
+
+---- View
+
+
+{-| AM or PM?
+-}
+type Meridiem
+    = AM
+    | PM
+
+
+{-| Convert 24 hours to 12 hours (AM/PM).
+Example:
+
+    to12Hours 14 --> (2, PM)
+
+-}
+to12Hours : Int -> ( Int, Meridiem )
+to12Hours hours24 =
+    let
+        hour12 =
+            modBy 12 hours24
+
+        hour12Corrected =
+            case hour12 of
+                0 ->
+                    12
+
+                _ ->
+                    hour12
+
+        meridiem =
+            case hours24 >= 12 of
+                True ->
+                    PM
+
+                False ->
+                    AM
+    in
+    ( hour12Corrected, meridiem )
+
+
+{-| View the time split up in hours, minutes, seconds and milliseconds.
+
+Instead of using formatting strings, we prefer here to make it easy to make your
+own timeView functions.
+
+Example:
+
+    let
+        myTimeView : Time -> String
+        myTimeView =
+            let
+                toStr = String.padLeft 2 '0' << String.fromInt
+                format t =
+                    toStr t.hour24 ++ ":" ++ toStr t.minute ++ ":" ++ toStr t.second
+            in
+            timeView >> format
+    in
+    pm 4 |> m 9 |> ms 15000
+        |> myTimeView
+        --> "16:09:15"
+
+Use to12Hours additionally if you want the hours in AM/PM format.
+Example using meridiem:
+
+    let
+        myTimeView : Time -> String
+        myTimeView t =
+            let
+                {hour24, minute, second, millisecond} = timeView t
+                (hour, meridiem) = to12Hours hour24
+                toStr = String.padLeft 2 '0' << String.fromInt
+                meridiemView m =
+                    case m of
+                        AM -> "AM"
+                        PM -> "PM"
+            in
+            String.fromInt hour ++ ":" ++ toStr minute ++ " " ++ meridiemView meridiem
+    in
+    pm 4 |> m 9 |> ms 15000
+        |> myTimeView
+        --> "4:09 PM"
+
+-}
+timeView : Time -> { hour24 : Int, minute : Int, second : Int, millisecond : Int }
+timeView (Time time) =
+    let
+        noonTo12 =
+            time + twelveHoursInMs
+
+        ( wholeHours, withoutHours ) =
+            substractWhole noonTo12 oneHourInMs
+
+        ( wholeMinutes, withoutMinutes ) =
+            substractWhole withoutHours 60000
+
+        ( wholeSeconds, withoutSeconds ) =
+            substractWhole withoutMinutes 1000
+    in
+    { hour24 = wholeHours
+    , minute = wholeMinutes
+    , second = wholeSeconds
+    , millisecond = withoutSeconds
+    }
+
+
+
+---- TimeZone ----
+
+
+{-| A time zone is defined by a default (bijective) mapping between moments and date/time and
+periods when there is a different mapping.
+
+New periods typically begin when there is a change in daylight savings time.
+
+TODO: add handling of leap seconds here when moment is in TAI and no longer in Unix time.
+
+-}
+type TimeZone
+    = TimeZone Mapping (List Period)
+
+
+{-| A period is a part of a time zone where every moment maps one-to-one (bijectively) to a date/time.
+
+To avoid possible conflicts in a time zone, only the start is explicitly defined.
+The end is defined by the start moment of the next period, chronologicaly.
+
+-}
+type alias Period =
+    { start : Mapping
+    }
+
+
+{-| Mapping defines a bijection between moments and date/times.
+
+It enable to switch between moment and date/time in a period where they map one-to-one (bijectively).
+
+-}
+type alias Mapping =
+    { moment : Moment
+    , dateTime : DateAndTime
+    }
+
+
+{-| The time zone defined as coordinated universal time or UTC.
+
+It maps 1 January 1970 to the epoch moment and never has a daylight savings time switch.
+
+TODO: update time zone to take leap seconds into account
+
+See <https://en.wikipedia.org/wiki/Coordinated_Universal_Time>
+
+-}
+utc : TimeZone
+utc =
+    let
+        mapping =
+            { moment = Moment.fromMsSinceEpoch 0
+            , dateTime =
+                { date = epochDate
+                , time = midnight
+                }
+            }
+    in
+    TimeZone mapping []
+
+
+customZone : Mapping -> List Period -> TimeZone
+customZone defaultMapping periods =
+    TimeZone defaultMapping periods
+
+
+{-| A naïve implementation of transforming the elm/time Zone to this TimeZone.
+It only works on zones without an era.
+
+We need to find a way to deal with time zones that have eras.
+
+-}
+zoneWithSameOffset : CoreTime.Zone -> TimeZone
+zoneWithSameOffset zone =
+    let
+        epoch =
+            CoreTime.millisToPosix 0
+
+        time =
+            h24 (CoreTime.toHour zone epoch)
+                |> m (CoreTime.toMinute zone epoch)
+                |> ms (CoreTime.toSecond zone epoch * 1000 + CoreTime.toMillis zone epoch)
+
+        date =
+            case CoreTime.toDay zone epoch of
+                1 ->
+                    epochDate
+
+                31 ->
+                    intoPast (days 1) epochDate
+
+                _ ->
+                    -- should not happen, no time zone is more that 14 hours from utc.
+                    epochDate
+
+        mapping =
+            Mapping (Moment.fromMsSinceEpoch 0) (withTime time date)
+    in
+    TimeZone mapping []
+
+
+{-| Get the date at the moment when this task is run and in the time zone
+where this task is run.
+-}
+today : Task x Date
+today =
+    Task.map2 (\zone moment -> toDateAndTime zone moment |> .date) (Task.map zoneWithSameOffset CoreTime.here) <|
+        Task.map (Moment.fromMsSinceEpoch << CoreTime.posixToMillis) CoreTime.now
+
+
+{-| Get the date and time at the moment when this task is run and in the time
+zone where this task is run.
+-}
+now : Task x DateAndTime
+now =
+    Task.map2 toDateAndTime (Task.map zoneWithSameOffset CoreTime.here) <|
+        Task.map (Moment.fromMsSinceEpoch << CoreTime.posixToMillis) CoreTime.now
+
+
+here : Task x TimeZone
+here =
+    Task.map zoneWithSameOffset CoreTime.here
+
+
+
+---- Conversion functions
+
+
+{-| The relevant period in the time zone for the moment.
+-}
+relevantMappingForMoment : TimeZone -> Moment -> Mapping
+relevantMappingForMoment (TimeZone mapping periods) moment =
+    List.foldl
+        (\period lastPeriod ->
+            if Moment.earliest period.start.moment moment == period.start.moment then
+                Just period
+
+            else
+                lastPeriod
+        )
+        Nothing
+        periods
+        |> Maybe.map .start
+        |> Maybe.withDefault mapping
+
+
+relevantMappingForDateAndTime : TimeZone -> DateAndTime -> Mapping
+relevantMappingForDateAndTime (TimeZone mapping periods) { date, time } =
+    List.foldl
+        (\period lastPeriod ->
+            case
+                ( chronologicalDateComparison period.start.dateTime.date date
+                , chronologicalTimeComparison period.start.dateTime.time time
+                )
+            of
+                ( GT, _ ) ->
+                    lastPeriod
+
+                ( LT, _ ) ->
+                    Just period
+
+                ( EQ, GT ) ->
+                    lastPeriod
+
+                ( EQ, _ ) ->
+                    Just period
+        )
+        Nothing
+        periods
+        |> Maybe.map .start
+        |> Maybe.withDefault mapping
+
+
+{-| Convert a moment to a date/time in a time zone.
+-}
+toDateAndTime : TimeZone -> Moment -> DateAndTime
+toDateAndTime zone moment =
+    let
+        relevantMapping =
+            relevantMappingForMoment zone moment
+    in
+    map relevantMapping moment
+
+
+{-| Convert a date/time to a moment in a time zone.
+-}
+toMoment : TimeZone -> DateAndTime -> Moment
+toMoment zone forDateTime =
+    let
+        { moment, dateTime } =
+            relevantMappingForDateAndTime zone forDateTime
+
+        (JDN startDate) =
+            dateTime.date
+
+        (Time startTime) =
+            dateTime.time
+
+        (JDN date) =
+            forDateTime.date
+
+        (Time time) =
+            forDateTime.time
+
+        -- We can do this, because there is a bijection between date/time and moment inside a period
+        timeLapse =
+            Moment.hours (24 * (date - startDate))
+                |> Moment.and Moment.milliseconds (time - startTime)
+    in
+    Moment.intoFuture timeLapse moment
+
+
+{-| Get the moment of noon in the given date. Noon being 12:00.
+-}
+toNoon : TimeZone -> Date -> Moment
+toNoon zone date =
+    toMoment zone (withTime noon date)
+
+
+
+---- Date and Time ----
+
+
+{-| A date and time.
+-}
+type alias DateAndTime =
+    { date : Date
+    , time : Time
+    }
+
+
+{-| Get the DateAndTime for the time and the date.
+-}
+withTime : Time -> Date -> DateAndTime
+withTime time date =
+    { date = date, time = time }
+
+
+
+---- HELPER FUNCTIONS ----
+
+
+{-| Subtract the whole part, when dividing by the factor, and return the whole part, and the remaining value.
+-}
+substractWhole : Int -> Int -> ( Int, Int )
+substractWhole value factor =
+    let
+        whole =
+            value // factor
+    in
+    ( whole, value - whole * factor )
+
+
+{-| Avoid use of mapInPeriod.
+
+It is used internally to find the time in a period.
+It assumes the moment is in the period.
+
+-}
+mapTimeInPeriod : ( Moment, Time ) -> Moment -> Time
+mapTimeInPeriod ( mapMoment, Time mapMs ) moment =
+    let
+        mapMidnight =
+            Moment.toMsAfterEpoch mapMoment
+                - mapMs
+                - twelveHoursInMs
+
+        fromMidnight =
+            Moment.toMsAfterEpoch moment
+                - mapMidnight
+                |> modBy twentyFourHoursInMs
+    in
+    Time (fromMidnight - twelveHoursInMs)
+
+
+twentyFourHoursInMs : Int
+twentyFourHoursInMs =
+    86400000
+
+
+twelveHoursInMs : Int
+twelveHoursInMs =
+    43200000
+
+
+oneHourInMs : Int
+oneHourInMs =
+    3600000
