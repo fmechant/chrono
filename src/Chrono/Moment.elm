@@ -1,36 +1,57 @@
 module Chrono.Moment exposing
-    ( Direction(..)
-    , Moment
-    , TimeLapse(..)
-    , and
-    , chronologicalComparison
-    , earliest
-    , elapsed
-    , every
-    , fromMsSinceEpoch
-    , hours
-    , intoFuture
-    , intoPast
-    , milliseconds
-    , minutes
-    , now
-    , seconds
+    ( Moment, now
+    , intoFuture, intoPast
+    , earliest, chronologicalComparison
+    , fromMsSinceEpoch, toMsAfterEpoch
+    , TimeLapse(..), Direction(..), every, elapsed
+    , hours, minutes, seconds, milliseconds, and
     , timeLapseView
-    , toMsAfterEpoch
     )
 
-{-| The Moment represents a specific moment in time. For example, the moment you
-first started reading this sentence.
+{-| Module for working with moments in time and time lapses. Hours, minutes,
+seconds make sense here.
 
-TimeLapses represent a specific time lapse between two moments. For example, the
-time lapse between starting to read the first sentence, and the start of reading
-this sentence.
+If you are looking for concepts like days or weeks, look into [Date][../Date].
+Months or years are used in the [GregorianCalendar][../GregorianCalendar]
+module.
 
-Here, the concepts seconds, minutes, hours make sense. If you are looking for
-concepts like days, week, months or years, look into Date and GregorianCalendar.
+If you are looking for [TimeZone][../Date#TimeZone], it is part of the Date
+module, because time zones define the mapping between a moment and a date/time.
 
-If you are looking for TimeZone, it is part of the Date module, because time
-zones define the mapping between a moment and a date/time.
+
+# Moments
+
+@docs Moment, now
+
+
+## Time Travel
+
+@docs intoFuture, intoPast
+
+
+## Comparing Moments
+
+@docs earliest, chronologicalComparison
+
+
+## Exchanging Moments with Other Systems
+
+@docs fromMsSinceEpoch, toMsAfterEpoch
+
+
+# Time Lapses
+
+@docs TimeLapse, Direction, every, elapsed
+
+
+## Defining Time Lapses
+
+@docs hours, minutes, seconds, milliseconds, and
+
+
+## Viewwing Time Lapses
+
+@docs timeLapseView
 
 -}
 
@@ -38,13 +59,14 @@ import Task exposing (Task)
 import Time as CoreTime
 
 
-{-| A specific moment in time.
+{-| A specific moment in time. For example, the moment you started reading this
+sentence.
 -}
 type Moment
     = Moment Int
 
 
-{-| Get the current moment when this task is run.
+{-| Get the moment when this task is run.
 
 This is typically used with the Elm architecture, like this:
 
@@ -137,13 +159,17 @@ chronologicalComparison (Moment m) (Moment n) =
 ---- TimeLapse ----
 
 
-{-| TimeLapse represents a lapse of time. It is represented in the moment
-module, because we are thinking about actual elaps of specific milliseconds,
-seconds, minutes and hours.
+{-| TimeLapses represent a specific time lapse between two moments. For example,
+the time lapse between starting to read the first sentence, and the start of
+reading this sentence.
 
-TimeLapse has no way of describing days, because one day is not always 24 hours.
-For example, moving 24 hours is not the same as moving a day. In Europe it is
-only the same in about 363 days a year, because of daylight time savings.
+It is represented in the moment module, because we are thinking about actual
+elaps of specific seconds, minutes and hours.
+
+**TimeLapse has no way of describing days,** because one day is not always 24
+hours. For example, going 24 hours into the future is not the same as going a
+day into the future. In Europe it is only the same in about 363 days a year,
+because of daylight time savings.
 
 If you want to describe duration of days, weeks, months or years, use Date or
 GregorianCalendar for that.
