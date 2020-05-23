@@ -1,51 +1,159 @@
 module Chrono.Date exposing
-    ( Date
-    , DateAndTime
-    , Duration
-    , Hour
-    , Mapping
-    , Meridiem(..)
-    , Period
-    , Time
-    , TimeZone(..)
-    , Weekday(..)
-    , am
-    , and
-    , chronologicalDateComparison
-    , chronologicalTimeComparison
-    , collect
-    , customZone
-    , days
-    , durationView
-    , elapsed
-    , fromJDN
-    , fromMsSinceNoon
-    , h24
-    , here
-    , intoFuture
-    , intoPast
-    , last
-    , m
-    , midnight
-    , ms
-    , next
-    , noon
-    , now
-    , pm
-    , timeView
-    , to12Hours
-    , toDateAndTime
-    , toJDN
-    , toMoment
-    , toMsSinceNoon
-    , toNoon
-    , toWeekday
-    , toWeekdayNumber
-    , utc
-    , weeks
-    , withTime
-    , zoneWithSameOffset
+    ( Date, now, chronologicalDateComparison
+    , DateAndTime, withTime, toNoon, toDateAndTime, toMoment
+    , Weekday(..), toWeekday, toWeekdayNumber
+    , intoFuture, intoPast, next, last, collect
+    , Duration, days, weeks, and, elapsed, durationView
+    , fromJDN, toJDN
+    , Time, Hour, am, pm, h24, m, ms, noon, midnight, chronologicalTimeComparison
+    , timeView, to12Hours, Meridiem(..)
+    , fromMsSinceNoon, toMsSinceNoon
+    , TimeZone(..), utc, here
+    , customZone, Period, Mapping
     )
+
+{-| Module for working with dates, time, time zones, durations.
+
+
+# Date
+
+A date is an abstract understanding of a period of time.
+What [elm/time][coretime] calls _Human Time_ and what [Abseil][abseil] calls
+_Civil Time_. A specific date is an abstract concept that is not directly
+linked to a moment in time.
+It is independent of a time zone or a calendar.
+
+For `Date`, days and weeks make sense. If you are looking for months or years,
+look into [GregorianCalendar][./GregorianCalendar].
+
+@docs Date, now, chronologicalDateComparison
+
+[coretime]: https://package.elm-lang.org/packages/elm/time/latest
+[abseil]: https://abseil.io/docs/cpp/guides/time
+
+
+## Date and Time, combined
+
+@docs DateAndTime, withTime, toNoon, toDateAndTime, toMoment
+
+
+## Weekday
+
+@docs Weekday, toWeekday, toWeekdayNumber
+
+
+## Time Travel
+
+You can move dates days or weeks. If you want more time travel, look into
+[GregorianCalendar][./GregorianCalendar].
+
+@docs intoFuture, intoPast, next, last, collect
+
+
+## Duration
+
+@docs Duration, days, weeks, and, elapsed, durationView
+
+
+## Date import/export
+
+@docs fromJDN, toJDN
+
+
+# Time
+
+A specific time of the day, like 14:00:00 or 6:00 PM.
+
+You can get the time from a moment, using a time zone.
+You can create a time using 12 hours or 24 hours notation.
+
+It also contains a function to timeView the time and to chronologically compare times.
+
+@docs Time, Hour, am, pm, h24, m, ms, noon, midnight, chronologicalTimeComparison
+
+
+## Viewing Time
+
+@docs timeView, to12Hours, Meridiem
+
+
+## Time import/export
+
+@docs fromMsSinceNoon, toMsSinceNoon
+
+
+## What about time travel?
+
+There are no functions to travel in time, because of the potential errors involved.
+When we add two hours to 01:00, we expect 3:00, but that is not always what we want,
+because of daylight savings.
+
+The only way to travel through time is using either moments or dates. If you want
+to have the time two hours later, you use Moment. If you want the hour to be two higher,
+you use Date.
+
+Example:
+Suppose you are at 2019-03-21 01:00:00 GMT+01:00 DST, right before the daylight-savings
+switch. What does going 2 hours in the future mean?
+
+Using moment (switch of daylight-savings time on 2019-03-21 03:00:00 GMT+02:00 DST):
+
+    import Chrono.Moment as Moment
+
+    let
+        switchMoment =
+            -- 2019-03-21 03:00:00 GMT+02:00 DST
+            Moment.fromMsSinceEpoch 1553994000000
+        switchDate =
+            fromJDN 2458574
+        zone =
+            customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = fromJDN 2440588, time = h24 1 |> m 0 } }
+                [ { start = { moment = switchMoment, dateTime = { date = switchDate, time = h24 3 |> m 0 } } } ]
+        oneAClock =
+            h24 1 |> m 0
+    in
+    switchDate
+        |> withTime oneAClock
+        |> toMoment zone
+        |> Moment.intoFuture (Moment.hours 2)
+        |> toDateAndTime zone
+        |> .time
+        --> h24 4 |> m 0
+
+Using date:
+
+    import Chrono.Moment as Moment
+
+    let
+        switchMoment =
+            -- 2019-03-21 03:00:00 GMT+02:00 DST
+            Moment.fromMsSinceEpoch 1553994000000
+        switchDate =
+            fromJDN 2458564
+        zone =
+            customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = fromJDN 2440588, time = h24 1 |> m 0 } }
+                [ { start = { moment = switchMoment, dateTime = { date = switchDate, time = h24 3 |> m 0 } } } ]
+        threeAClock =
+            h24 3 |> m 0
+    in
+    switchDate
+        |> withTime threeAClock
+        |> .time
+        --> h24 3 |> m 0
+
+
+# TimeZone
+
+You use a `TimeZone` to map between a `Moment` and a `DateAndTime`.
+
+@docs TimeZone, utc, here
+
+
+## Creating you own Time Zones
+
+@docs customZone, Period, Mapping
+
+-}
 
 import Chrono.Moment as Moment exposing (Direction(..), Moment)
 import Task exposing (Task)
@@ -57,19 +165,11 @@ import Time as CoreTime
 
 
 {-| A date is an abstract understanding of a period of time.
-It is independent of a time zone or a calendar.
-
-What [elm/time][coretime] calls _Human Time_ and what [Abseil][abseil] calls
-_Civil Time_. A specific date is an abstract concept that is not directly
-linked to a moment in time.
 
 The internal representation of the Date is the Julian Day Number.
 This is the number of days since the Julian day number 0, which is
 Monday, January 1, 4713 BC, proleptic Julian calendar or
 November 24, 4714 BC, in the proleptic Gregorian calendar.
-
-[coretime]: https://package.elm-lang.org/packages/elm/time/latest
-[abseil]: https://abseil.io/docs/cpp/guides/time
 
 -}
 type Date
@@ -437,74 +537,7 @@ elapsed (JDN from) (JDN to) =
 ---- Time ----
 
 
-{-| A specific time of the day, like 14:00:00 or 6:00 PM.
-
-You can get the time from a moment, using a time zone.
-You can create a time using 12 hours or 24 hours notation.
-
-It also contains a function to timeView the time and to chronologically compare times.
-
-
-# What about time travel?
-
-There are no functions to travel in time, because of the potential errors involved.
-When we add two hours to 01:00, we expect 3:00, but that is not always what we want,
-because of daylight savings.
-
-The only way to travel through time is using either moments or dates. If you want
-to have the time two hours later, you use Moment. If you want the hour to be two higher,
-you use Date.
-
-Example:
-Suppose you are at 2019-03-21 01:00:00 GMT+01:00 DST, right before the daylight-savings
-switch. What does going 2 hours in the future mean?
-
-Using moment (switch of daylight-savings time on 2019-03-21 03:00:00 GMT+02:00 DST):
-
-    import Chrono.Moment as Moment
-
-    let
-        switchMoment =
-            -- 2019-03-21 03:00:00 GMT+02:00 DST
-            Moment.fromMsSinceEpoch 1553994000000
-        switchDate =
-            fromJDN 2458574
-        zone =
-            customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = fromJDN 2440588, time = h24 1 |> m 0 } }
-                [ { start = { moment = switchMoment, dateTime = { date = switchDate, time = h24 3 |> m 0 } } } ]
-        oneAClock =
-            h24 1 |> m 0
-    in
-    switchDate
-        |> withTime oneAClock
-        |> toMoment zone
-        |> Moment.intoFuture (Moment.hours 2)
-        |> toDateAndTime zone
-        |> .time
-        --> h24 4 |> m 0
-
-Using date:
-
-    import Chrono.Moment as Moment
-
-    let
-        switchMoment =
-            -- 2019-03-21 03:00:00 GMT+02:00 DST
-            Moment.fromMsSinceEpoch 1553994000000
-        switchDate =
-            fromJDN 2458564
-        zone =
-            customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = fromJDN 2440588, time = h24 1 |> m 0 } }
-                [ { start = { moment = switchMoment, dateTime = { date = switchDate, time = h24 3 |> m 0 } } } ]
-        threeAClock =
-            h24 3 |> m 0
-    in
-    switchDate
-        |> withTime threeAClock
-        |> .time
-        --> h24 3 |> m 0
-
--}
+{-| -}
 type Time
     = Time Int -- The number of milliseconds from noon (12:00).
 
@@ -1023,28 +1056,6 @@ substractWhole value factor =
             value // factor
     in
     ( whole, value - whole * factor )
-
-
-{-| Avoid use of mapInPeriod.
-
-It is used internally to find the time in a period.
-It assumes the moment is in the period.
-
--}
-mapTimeInPeriod : ( Moment, Time ) -> Moment -> Time
-mapTimeInPeriod ( mapMoment, Time mapMs ) moment =
-    let
-        mapMidnight =
-            Moment.toMsAfterEpoch mapMoment
-                - mapMs
-                - twelveHoursInMs
-
-        fromMidnight =
-            Moment.toMsAfterEpoch moment
-                - mapMidnight
-                |> modBy twentyFourHoursInMs
-    in
-    Time (fromMidnight - twelveHoursInMs)
 
 
 twentyFourHoursInMs : Int

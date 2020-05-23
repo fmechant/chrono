@@ -11,11 +11,11 @@ module Chrono.Moment exposing
 {-| Module for working with moments in time and time lapses. Hours, minutes,
 seconds make sense here.
 
-If you are looking for concepts like days or weeks, look into [Date][../Date].
-Months or years are used in the [GregorianCalendar][../GregorianCalendar]
+If you are looking for concepts like days or weeks, look into [Date][./Date].
+Months or years are used in the [GregorianCalendar][./GregorianCalendar]
 module.
 
-If you are looking for [TimeZone][../Date#TimeZone], it is part of the Date
+If you are looking for [TimeZone][./Date#TimeZone], it is part of the Date
 module, because time zones define the mapping between a moment and a date/time.
 
 
