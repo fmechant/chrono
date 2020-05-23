@@ -24,6 +24,23 @@ all =
                     twentyEightFebruary2000
                         |> fromDate
                         |> Expect.equal { year = 2000, month = February, day = 28 }
+            , fuzz fuzzDate "round trip through fromDate, toDate should return same date" <|
+                \aDate ->
+                    aDate
+                        |> fromDate
+                        |> toDate
+                        |> Expect.equal aDate
+            , fuzz3 (Fuzz.intRange 1 31) fuzzMonth fuzzYear "round trip through toDate, fromDate should return same Gregorian date" <|
+                \aDay aMonth aYear ->
+                    let
+                        aValidDate =
+                            { year = aYear, month = aMonth, day = aDay }
+                                |> stayInSameMonth
+                    in
+                    aValidDate
+                        |> toDate
+                        |> fromDate
+                        |> Expect.equal aValidDate
             ]
         , describe "leap years"
             [ test "2000 is a leap year" <|

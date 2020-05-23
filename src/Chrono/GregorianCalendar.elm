@@ -1,36 +1,62 @@
 module Chrono.GregorianCalendar exposing
-    ( Month(..)
-    , MoveStrategy
-    , Moves
-    , Ordinal(..)
-    , YearType(..)
-    , andThen
-    , andThenOnlyWhen
-    , days
-    , first
-    , fromDate
-    , fromMonthNumber
-    , inMonth
-    , intoFuture
-    , intoPast
-    , last
-    , lastWeekday
-    , months
-    , nextWeekday
-    , onlyWhen
-    , second
-    , secondToLast
-    , stayInSameMonth
-    , third
-    , toDate
-    , toDayInMonth
-    , toMonthNumber
-    , toYearType
-    , travel
-    , typeOfYear
-    , weeks
-    , years
+    ( toDate, fromDate
+    , Month(..), toMonthNumber, fromMonthNumber
+    , Moves, travel, andThen, onlyWhen, andThenOnlyWhen, MoveStrategy, stayInSameMonth
+    , intoFuture, intoPast, days, weeks, months, years
+    , nextWeekday, lastWeekday, toDayInMonth
+    , inMonth, Ordinal(..), first, second, third, last, secondToLast
+    , YearType(..), typeOfYear, toYearType
     )
+
+{-| Module for working with Dates using the GregorianCalendar.
+
+It contains the concepts specific for the Gregorian calendar, like months,
+years.
+
+It enables complex time travel by defining moves, like:
+
+  - go to the next Wednesday,
+  - and then go to the next month,
+  - and then if the month is September, go two months in the past,
+  - and then take the last day of the month.
+
+
+# Create Dates
+
+@docs toDate, fromDate
+
+
+# Months
+
+@docs Month, toMonthNumber, fromMonthNumber, numberOfDaysInMonth
+
+
+# Time Travel
+
+@docs Moves, travel, andThen, onlyWhen, andThenOnlyWhen, MoveStrategy, stayInSameMonth
+
+
+## Nominal Moves
+
+Nominal moves are moves of a number of days, weeks, months, years.
+
+@docs NominalMove, intoFuture, intoPast, days, weeks, months, years, reverse
+
+
+## Ordinal Moves
+
+Ordinal moves are moves to the next weekday, or day of the month, or previous.
+
+@docs nextWeekday, lastWeekday, toDayInMonth
+
+@docs inMonth, Ordinal, first, second, third, last, secondToLast
+
+
+# Leap Years
+
+@docs YearType, typeOfYear, toYearType
+
+-}
 
 import Chrono.Date as Date exposing (Date)
 
