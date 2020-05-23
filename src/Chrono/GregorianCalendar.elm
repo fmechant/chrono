@@ -21,6 +21,43 @@ It enables complex time travel by defining moves, like:
   - and then take the last day of the month.
 
 
+# Collecting Dates with Time Travel
+
+Using these moves with `Date.collect` is really empowering.
+Suppose you want the last three Wednesdays of the month of a certain date.
+
+    import Chrono.Date as Date exposing (Date, Weekday(..))
+
+    may2020 : Int -> Date
+    may2020 day =
+        toDate { year = 2020, month = May, day = day }
+
+    let
+        lastWednesday =
+            may2020 22
+                |> travel (inMonth last Wednesday )
+    in
+    lastWednesday
+        |> Date.collect 2 (travel <| lastWeekday Wednesday)
+        |> (::) lastWednesday
+        |> List.sortWith Date.chronologicalDateComparison
+        --> [ may2020 13, may2020 20, may2020 27]
+
+Or, maybe you need the next 10 weekdays?
+
+    import Chrono.Date as Date exposing (Date, Weekday(..))
+
+    let
+        nextWeekday =
+            intoFuture (days 1)
+                |> andThenOnlyWhen (Date.toWeekday >> (==) Saturday) (intoFuture (days 2))
+                |> andThenOnlyWhen (Date.toWeekday >> (==) Sunday) (intoFuture (days 1))
+    in
+    may2020 2
+        |> Date.collect 10 (travel nextWeekday)
+        --> [ may2020 4, may2020 5, may2020 6, may2020 7, may2020 8, may2020 11, may2020 12, may2020 13, may2020 14, may2020 15 ]
+
+
 # Create Dates
 
 @docs toDate, fromDate
