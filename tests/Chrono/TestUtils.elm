@@ -1,21 +1,24 @@
 module Chrono.TestUtils exposing
-    ( daylightSavingsTimeZone
+    ( epocDateTimeInUtc
+    , epoch
+    , epochDate
     , fuzzDate
+    , fuzzDateAndTime
     , fuzzDateDuration
-    , fuzzDuration
-    , fuzzEraStart
     , fuzzMoment
     , fuzzMonth
-    , fuzzNonZeroDuration
-    , fuzzOffset
+    , fuzzNonZeroTimeLapse
     , fuzzThursday
+    , fuzzTime
+    , fuzzTimeLapse
+    , fuzzTimeZoneNoPeriods
+    , fuzzTimeZoneWithPeriod
     , fuzzYear
-    , minutesInMs
     )
 
 import Chrono.Date as Date exposing (Date)
 import Chrono.GregorianCalendar as Cal
-import Chrono.Moment as Moment exposing (Moment, TimeZone)
+import Chrono.Moment as Moment exposing (Moment)
 import Fuzz
 import Random
 
@@ -25,39 +28,34 @@ fuzzDate =
     Fuzz.map Date.fromJDN <| Fuzz.intRange 2415021 3415021
 
 
+fuzzTime : Fuzz.Fuzzer Date.Time
+fuzzTime =
+    Fuzz.map Date.fromMsSinceNoon <| Fuzz.intRange -43200000 43199999
+
+
+fuzzDateAndTime : Fuzz.Fuzzer Date.DateAndTime
+fuzzDateAndTime =
+    Fuzz.map2 Date.DateAndTime fuzzDate fuzzTime
+
+
 fuzzMoment : Fuzz.Fuzzer Moment
 fuzzMoment =
     Fuzz.map Moment.fromMsSinceEpoch <| Fuzz.intRange 0 Random.maxInt
 
 
-fuzzOffset : Fuzz.Fuzzer Int
-fuzzOffset =
-    Fuzz.map ((*) 15) <| Fuzz.intRange -48 48
-
-
-fuzzEraStart : Fuzz.Fuzzer Int
-fuzzEraStart =
-    Fuzz.intRange 0 (Random.maxInt // 60000)
-
-
-fuzzEra : Fuzz.Fuzzer Moment.Era
-fuzzEra =
-    Fuzz.map2 Moment.Era fuzzEraStart fuzzOffset
-
-
-fuzzDuration : Fuzz.Fuzzer Moment.Duration
-fuzzDuration =
+fuzzTimeLapse : Fuzz.Fuzzer Moment.TimeLapse
+fuzzTimeLapse =
     Fuzz.map Moment.milliseconds <| Fuzz.map abs Fuzz.int
 
 
-fuzzNonZeroDuration : Fuzz.Fuzzer Moment.Duration
-fuzzNonZeroDuration =
+fuzzNonZeroTimeLapse : Fuzz.Fuzzer Moment.TimeLapse
+fuzzNonZeroTimeLapse =
     Fuzz.map Moment.milliseconds <| Fuzz.map ((+) 1) <| Fuzz.map abs Fuzz.int
 
 
 fuzzDateDuration : Fuzz.Fuzzer Date.Duration
 fuzzDateDuration =
-    Fuzz.map Date.days (Fuzz.intRange 0 Random.maxInt)
+    Fuzz.map Date.days (Fuzz.intRange 1 Random.maxInt)
 
 
 fuzzThursday : Fuzz.Fuzzer Date
@@ -75,17 +73,49 @@ fuzzYear =
     Fuzz.intRange 1900 2100
 
 
-{-| TimeZone that switches from +01:00 to +02:00 at the given moment.
--}
-daylightSavingsTimeZone : Moment -> TimeZone
-daylightSavingsTimeZone moment =
+fuzzTimeZoneNoPeriods : Fuzz.Fuzzer Date.TimeZone
+fuzzTimeZoneNoPeriods =
     let
-        start =
-            round <| (toFloat <| Moment.toMsAfterEpoch moment) / 60000
+        ftz moment dateAndTime =
+            Date.customZone { moment = moment, dateTime = dateAndTime } []
     in
-    Moment.customZone 60 [ { start = start, offset = 120 } ]
+    Fuzz.map2 ftz fuzzMoment fuzzDateAndTime
 
 
-minutesInMs : Int -> Int
-minutesInMs value =
-    value * 60000
+fuzzTimeZoneWithPeriod : Fuzz.Fuzzer ( Date.TimeZone, Date.Mapping, Date.Period )
+fuzzTimeZoneWithPeriod =
+    let
+        ftz moment dateAndTime timeLapse dateAndTimeInPeriod =
+            let
+                period =
+                    { start =
+                        { moment = Moment.intoFuture timeLapse moment
+                        , dateTime = dateAndTimeInPeriod
+                        }
+                    }
+
+                mapping =
+                    { moment = moment, dateTime = dateAndTime }
+            in
+            ( Date.customZone mapping [ period ], mapping, period )
+    in
+    Fuzz.map4 ftz fuzzMoment fuzzDateAndTime fuzzNonZeroTimeLapse fuzzDateAndTime
+
+
+
+---- EPOCH RELATED ----
+
+
+epoch : Moment
+epoch =
+    Moment.fromMsSinceEpoch 0
+
+
+epochDate : Date
+epochDate =
+    Date.fromJDN 2440588
+
+
+epocDateTimeInUtc : Date.DateAndTime
+epocDateTimeInUtc =
+    { date = epochDate, time = Date.h24 0 |> Date.m 0 }
