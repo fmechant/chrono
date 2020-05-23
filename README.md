@@ -10,8 +10,7 @@ The particular goals of this library are:
 
 ## Concepts and terminology
 
-When you work with this library, it is important to understand the concepts and
-the terminology used.
+Some important concepts and terminology to understand.
 
 ### Moment
 
@@ -64,6 +63,8 @@ getDate =
 
 ### Video call in New York And Amsterdam
 
+Converting date and time to a different time zone.
+
 ```elm
 import Chrono.Date as Date exposing (h24, m)
 import Chrono.GregorianCalendar as Cal exposing (Month(..))
@@ -80,6 +81,8 @@ in
 ```
 
 ### Simple Time Travel
+
+Moving backwards in time.
 
 ```elm
 import Chrono.Date as Date exposing (Date)
@@ -122,15 +125,15 @@ Cal.toDate { day = 30, month = May, year = 2019  }
 
 ## A Recurrent Meeting
 
-A good example of how to deal with preventing the mixture of concepts is when
+A good example of how to deal with preventing the misuse of concepts is when
 creating a recurrent meeting:
 Suppose we want to make a meeting recurrent for the next three weeks.
 Since a meeting is at a specific moment in time, its representation is a moment.
 
 Action plan:
 1. Get the date and time of the moment in the specific time zone.
-2. Get the dates and times fast forwarded a week three times.
-3. Convert the dates and times to moments in the specific time zone.
+2. Get the dates and time fast forwarded a week three times.
+3. Convert the dates and time to moments in the specific time zone.
 
 PS: Brussels time goes to summer time on 31 March 2019.
 
@@ -171,9 +174,8 @@ recurrent { times = 3, duration = (Date.weeks 1), timeZone = brusselsTimeZone}
 --> ]
 ```
 
-So, instead of mixing the concept, we explicitly use the correct models, so we have
-predictable results. Even when the weeks include a change of the time offset
-(daylight savings time).
+So if we use the correct models, we get predictable results. Even when the weeks
+include a change of the time offset (daylight savings time).
 If we were to naively add 7 \* 24 \* 60 \* 60 \* 1000 ms to the moment, we introduced
 an error when the time offset changes.
 
