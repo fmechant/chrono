@@ -1,12 +1,12 @@
 {
     "type": "application",
     "name": "fmech/chrono",
-    "summary": "Work with moments in time, dates and times of day in Elm",
+    "summary": "Work with moments in time, dates and times of day",
     "license": "BSD-3-Clause",
     "source-directories": [
         "src"
     ],
-    "elm-version": "0.19.0",
+    "elm-version": "0.19.1",
     "dependencies": {
         "direct": {
             "elm/core": "1.0.2",

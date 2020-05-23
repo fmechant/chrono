@@ -1,158 +1,206 @@
-# elm-chrono
+# Date, Time, Moment
 
-`elm-chrono` simplifies working with dates, time and moments in time.
+`chrono` simplifies working with dates, time and moments in time.
 
-## Dates
-It treats dates as first-class citizen, where time travel is easy.
+The particular goals of this library are:
+- Make working with dates, time and moments as simple as possible, but not simpler.
+- Prevent common mistakes by making you think what you actually mean, a date or a moment.
+- Be able to use without knowing all the complexities of dates and time.
+- Make you have fun with time travel :)
 
-A simple example using Date:
+## Concepts and terminology
+
+Some important concepts and terminology to understand.
+
+### Moment
+
+Suppose you live in New York and you want to schedule a video call with a friend
+in Amsterdam. When you agree on a date and time, you have to realize that you
+are both in a different time zone. Meeting on 2020-05-20 at 16:00 does not make
+sense without the time zone. If you say 16:00 in New York, your friend will know
+it to be 22:00 in Amsterdam.
+
+You are actually deciding on a specific `Moment` to meet. The use of date and time
+is convenient for us, because *1590004800000* is difficult to work with.
+
+### Time
+
+Suppose you are sportive and you schedule a 30 minute run every morning at 8:00.
+When you go to visit your friend in Amsterdam, you still want to have your run
+at 8:00, and not at 14:00. It is a specific `Time` you mean.
+
+### Date
+
+You both celebrated New Year's at the start of 1 January 2020. It was a different
+moment for both of you, but it was the same `Date`.
+
+### Time Zone
+
+For your watch to be able to notify you on 2020-05-21 that it is time to start
+running, it needs to convert 2020-05-21 and 8:00 to a specific moment. It needs
+a `TimeZone` to do that. If it didn't have that, it would notify you at 14:00 in
+Amsterdam, not what you want.
+
+## Examples
+
+### Get current Date and Time
+
+You can see what date it is by using `now`.
+
+By the way, it uses the current time zone under the hood.
+
 ```elm
-import Chrono.Date as Date exposing (Date)
-import Chrono.GregorianCalendar as Cal
+import Chrono.Date as Date exposing (DateAndTime)
+import Task
+
+type Msg
+    = SystemGotDate DateAndTime
+    
+getDate : Cmd Msg
+getDate =
+    Task.perform SystemGotDate Date.now
+```
+
+### Video call in New York And Amsterdam
+
+Converting date and time to a different time zone.
+
+```elm
+import Chrono.Date as Date exposing (h24, m)
+import Chrono.GregorianCalendar as Cal exposing (Month(..))
+import Chrono.Moment as Moment exposing (Moment)
 
 let
-    twoWeeksAgo: Date -> Date
-    twoWeeksAgo date =
-        date 
-            |> Cal.travel (Cal.intoPast (Cal.weeks 2))
+    newYorkZone = Date.customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = Date.fromJDN 2440587, time = h24 20 |> m 0 } } []
+    amsterdamZone = Date.customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = Date.fromJDN 2440588, time = h24 2 |> m 0 } } []
 in
-Cal.fromGregorianDate { day = 15, month = Cal.January, year = 2020  }
-    |> twoWeeksAgo
---> Cal.fromGregorianDate { day = 1, month = Cal.January, year = 2020  }
+{ date = Cal.toDate { year = 2020, month = May, day = 20}, time = h24 16 |> m 0 }
+    |> Date.toMoment newYorkZone
+    |> Date.toDateAndTime amsterdamZone
+    --> { date = Cal.toDate { year = 2020, month = May, day = 20}, time = h24 22 |> m 0 }
 ```
+
+### Simple Time Travel
+
+Moving backwards in time.
+
+```elm
+import Chrono.Date as Date exposing (Date)
+import Chrono.GregorianCalendar as Cal exposing (intoPast, Month(..), weeks)
+
+let
+    twoWeeksEarlier: Date -> Date
+    twoWeeksEarlier date =
+        date 
+            |> Cal.travel (intoPast (weeks 2))
+in
+Cal.toDate { day = 15, month = January, year = 2020  }
+    |> twoWeeksEarlier
+--> Cal.toDate { day = 1, month = January, year = 2020  }
+```
+
+### Moving months
 
 When working with months, we need a `MoveStrategy` so the time traveller
 knows what to do with impossible dates.
 
-An example with a `MoveStrategy`:
+The `stayInSameMonth` strategy finds a correct date as close as possible, within
+the same month, so 31 February would become 28 or 29 February, and not 3 or 4
+March.
+
 ```elm
 import Chrono.Date as Date exposing (Date)
-import Chrono.GregorianCalendar as Cal
+import Chrono.GregorianCalendar as Cal exposing (intoFuture, Month(..), months)
 
 let
     dateOfBirth: Date -> Date
     dateOfBirth date =
         date 
-            |> Cal.travel (Cal.intoFuture (Cal.months 9 Cal.stayInSameMonth))
+            |> Cal.travel (intoFuture (months 9 Cal.stayInSameMonth))
 in
-Cal.fromGregorianDate { day = 30, month = Cal.May, year = 2019  }
+Cal.toDate { day = 30, month = May, year = 2019  }
     |> dateOfBirth
---> Cal.fromGregorianDate { day = 29, month = Cal.February, year = 2020  }
+--> Cal.toDate { day = 29, month = February, year = 2020  }
 ```
-
-## Moments in Time
-It also provides a way to specify a specific moment in time.
-
-What we call `Moment`, is what [elm/time][coretime] calls `Posix` and what
-[Abseil][abseil] calls _Absolute Time_.
-To improve understanding, let's look at the moment of time Neil Armstrong first
-set foot on the moon. If we look at [wikipedia][wikiapollo], it says that
-happened on July 21, 1969 at 02:56 UTC. When viewing live in Europe, you could
-have seen that on July 21 at 04:56. In New York, that would have been on July 20
-at 22:56. Remark that even the date is different.
-To be able to represent a moment in time, we pick a moment in the past, and work
-relative from that.
-
-[coretime]: https://package.elm-lang.org/packages/elm/time/latest
-[abseil]: https://abseil.io/docs/cpp/guides/time
-[wikiapollo]: https://en.wikipedia.org/wiki/Apollo_11
-
-
-
-
-
-
-
-
-# Working with dates, times and moments in time
-
-When you want to work with dates and time, you realize that it is surprisingly complex. You need to learn about time zones and posix time and calendars, but you only simply want to use a Date.
-This library aspires to allow you to work with dates and times, preventing you from making mistakes without having to know all the intrinsics about the Date/Time problems.
-
-# Things to know
-
-Still, there are things you should be aware of to be able to work with dates and times effectively. Two concepts to know about.
-
-
-## Date and Time
-
-The second concept is dates and times. What [elm/time][coretime] calls _Human Time_ and what [Abseil][abseil] calls _Civil Time_. A specific date is an abstract concept that is not directly linked to a moment in time.
-To improve understanding, let's look at the celebration of New Year 2020. In the diagram, we see at what moments in time New Year is celebrated.
-
-TODO: Add diagram of new years in moments of time
-
-In this library, we depart from most other Time libraries, in that we consider a Date as a specific concept, irrelative of moments in time. We avoid using UTC to mix the concepts.
-To be able to represent a date, we pick a date in the past, and work relative from that.
-
-## Conversion
-
-Although there is some correlation with moments in time and date and time, we can clearly see it is not a simple relationship. To convert from a moment in time to a date and time, we need a timezone. That is why usually UTC is used to 'fix' the conversion problem, but we believe it creates more problems than it solved.
-
-# Examples
-
-TODO: create some simple example for using the library for things that users need all the time
-
-## A Date Selector
-
-TODO
 
 ## A Recurrent Meeting
 
-A good example of how to deal with preventing the mixture of concepts is when
+A good example of how to deal with preventing the misuse of concepts is when
 creating a recurrent meeting:
 Suppose we want to make a meeting recurrent for the next three weeks.
 Since a meeting is at a specific moment in time, its representation is a moment.
-Weeks is a concept of the date and time model. Here is how we do that using this
-library:
 
-1. get the date and time of the moment in the specific time zone
-2. get the dates and times fast forwarded a week three times
-3. convert the dates and times to moments in the specific time zone
+Action plan:
+1. Get the date and time of the moment in the specific time zone.
+2. Get the dates and time fast forwarded a week three times.
+3. Convert the dates and time to moments in the specific time zone.
 
+PS: Brussels time goes to summer time on 31 March 2019.
 
-import Chrono.Date as Date
-import Chrono.Time as Time
-import Chrono.TimeZone as TimeZone exposing (TimeZone)
-import Chrono.Moment exposing (Moment)
-import Chrono.DateAndTime as DateAndTime
-import Chrono.GregorianCalendar as Cal
+```elm
+import Chrono.Date as Date exposing (h24, intoFuture, m)
+import Chrono.Moment as Moment exposing (Moment)
+import Chrono.GregorianCalendar as Cal exposing (Month(..))
 
-recurrent: Int -> Date.Duration -> TimeZone -> Moment -> List Moment
-recurrent times duration timeZone moment =
-    let
-        { date, time } = DateAndTime.fromMoment timeZone moment
-    in
-    date
-        |> Date.collect times duration
-        |> List.map (DateAndTime.withTime time)
-        |> List.map (DateAndTime.toMoment timeZone)
+inBrussels : { day : Int, month : Month, year : Int, hour : Int, minute : Int } -> Moment
+inBrussels { day, month, year, hour, minute} =
+    { day = day, month = month, year = year}
+        |> Cal.toDate
+        |> Date.withTime (h24 hour |> m minute)
+        |> Date.toMoment brusselsTimeZone
 
-{-| Brussels time goes to summer time on 31 March 2019.-}
-brusselsTimeZone : TimeZone
+brusselsTimeZone : Date.TimeZone 
 brusselsTimeZone =
-    TimeZone.customZone 60 [{start = 1553994000000, offset = 120}]
+    Date.customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = Date.fromJDN 2440588, time = h24 1 |> m 0 } }
+        [ { start = { moment = Moment.fromMsSinceEpoch 1553994000000, dateTime = { date = Date.fromJDN 2458574, time = h24 3 |> m 0 } } } ]
 
-inBrussels : { day : Int, month : Cal.Month, year : Int, hour : Int, minute : Int } -> Moment
-inBrussels =
-    Cal.fromDayMonthYearHourMinute >> (DateAndTime.toMoment brusselsTimeZone)
-
-recurrent 3 (Date.weeks 1) brusselsTimeZone (inBrussels {day = 29, month = Cal.March, year = 2019, hour = 13, minute = 0})
+let
+    recurrent: { times: Int, duration: Date.Duration, timeZone: Date.TimeZone} -> Moment -> List Moment
+    recurrent { times, duration, timeZone} moment =
+        let
+            { date, time } = Date.toDateAndTime timeZone moment
+        in
+        date
+            |> Date.collect times (intoFuture duration)
+            |> List.map (Date.withTime time)
+            |> List.map (Date.toMoment timeZone)
+in
+recurrent { times = 3, duration = (Date.weeks 1), timeZone = brusselsTimeZone}
+    (inBrussels {day = 22, month = Cal.March, year = 2019, hour = 13, minute = 0})
 --> [
--->    inBrussels {day = 5, month = Cal.April, year = 2019, hour = 13, minute = 0},
--->    inBrussels {day = 12, month = Cal.April, year = 2019, hour = 13, minute = 0},
--->    inBrussels {day = 19, month = Cal.April, year = 2019, hour = 13, minute = 0}
+-->    inBrussels {day = 29, month = March, year = 2019, hour = 13, minute = 0},
+-->    inBrussels {day = 5, month = April, year = 2019, hour = 13, minute = 0},
+-->    inBrussels {day = 12, month = April, year = 2019, hour = 13, minute = 0}
 --> ]
+```
 
+So if we use the correct models, we get predictable results. Even when the weeks
+include a change of the time offset (daylight savings time).
+If we were to naively add 7 \* 24 \* 60 \* 60 \* 1000 ms to the moment, we introduced
+an error when the time offset changes.
 
-So, instead of mixing the concept, we explicitly use the correct models, so we have
-predictable results. Even when the weeks include a change of the time offset
-(daylight savings time).
-If we were to naively add 7 _ 24 _ 60 _ 60 _ 1000 ms to the moment, we introduced
-an error when the time offset changes. Intuitively, if we fast forward a meeting
+**Intuitively**, if we fast forward a meeting
 a week, we want the hour to stay the same.
+
 If we were to represent the meeting in a date and time, we again introduced an error,
 because if somebody from a different time zone where to participate in the meeting,
 he would be late, or early.
 
+
+### A Date Selector
+
+TODO
+
+
+## Remarks
+
+In this library, we depart from most other date/time libraries. How?
+- We consider a Date as a specific concept, irrelative of moments in time. We avoid using UTC to mix the concepts.
+To be able to represent a date, we pick a date in the past (epoch date), and work relative from that.
+- TimeZone is completely independent of UTC. It is defined as periods,
+with each period defining a (bijective) mapping between moment and date/time. This
+is something very new to date/time libraries, but when I started
+thinking this way, everything got way simpler.
+
 We hope this library makes you think what it is exactly that you are trying to
-represent, and then use the relevant model, so subtle errors are avoided.
+represent, and then use the relevant concept, so subtle errors are avoided.

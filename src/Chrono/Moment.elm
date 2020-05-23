@@ -1,39 +1,102 @@
 module Chrono.Moment exposing
-    ( Duration
-    , Moment
-    , and
-    , chronologicalComparison
-    , elapsed
-    , fromMsSinceEpoch
-    , hours
-    , intoFuture
-    , intoFutureForZone
-    , intoPast
-    , intoPastForZone
-    , milliseconds
-    , minutes
-    , now
-    , seconds
-    , toMsAfterEpoch
-    , viewDuration
+    ( Moment, now
+    , intoFuture, intoPast
+    , earliest, chronologicalComparison
+    , fromMsSinceEpoch, toMsAfterEpoch
+    , TimeLapse(..), Direction(..), every, elapsed
+    , hours, minutes, seconds, milliseconds, and
+    , timeLapseView
     )
 
-{-| The moment model represents specific moments in time. For example the moment you
-first started reading this sentence.
+{-| Module for working with moments in time and time lapses. Hours, minutes,
+seconds make sense here.
+
+If you are looking for concepts like days or weeks, look into [Date][../Date].
+Months or years are used in the [GregorianCalendar][../GregorianCalendar]
+module.
+
+If you are looking for [TimeZone][../Date#TimeZone], it is part of the Date
+module, because time zones define the mapping between a moment and a date/time.
+
+
+# Moments
+
+@docs Moment, now
+
+
+## Time Travel
+
+@docs intoFuture, intoPast
+
+
+## Comparing Moments
+
+@docs earliest, chronologicalComparison
+
+
+## Exchanging Moments with Other Systems
+
+@docs fromMsSinceEpoch, toMsAfterEpoch
+
+
+# Time Lapses
+
+@docs TimeLapse, Direction, every, elapsed
+
+
+## Defining Time Lapses
+
+@docs hours, minutes, seconds, milliseconds, and
+
+
+## Viewwing Time Lapses
+
+@docs timeLapseView
+
 -}
 
-import Chrono.TimeZone as TimeZone exposing (TimeZone)
 import Task exposing (Task)
 import Time as CoreTime
 
 
-{-| A specific moment in time.
+{-| A specific moment in time. For example, the moment you started reading this
+sentence.
+
+What we call `Moment`, is what [elm/time][coretime] calls `Posix` and what
+[Abseil][abseil] calls _Absolute Time_.
+
+To improve understanding, let's look at the moment of time Neil Armstrong first
+set foot on the moon. If we look at [wikipedia][wikiapollo], it says that
+happened on July 21, 1969 at 02:56 UTC. When viewing live in Europe, you could
+have seen that on July 21 at 04:56. In New York, that would have been on July 20
+at 22:56. Remark that even the date is different.
+
+To be able to represent a moment in time, we pick a moment in the past (the
+epoch), and work relative from that.
+
+[coretime]: https://package.elm-lang.org/packages/elm/time/latest
+[abseil]: https://abseil.io/docs/cpp/guides/time
+[wikiapollo]: https://en.wikipedia.org/wiki/Apollo_11
+
 -}
 type Moment
     = Moment Int
 
 
-{-| Get the current moment when this task is run.
+{-| Get the moment when this task is run.
+
+This is typically used with the Elm architecture, like this:
+
+    import Task
+
+    type Msg
+        = SystemGotNow Moment
+
+    update msg model =
+        case msg of
+            _ ->
+                ( model, Task.perform SystemGotNow now )
+
 -}
 now : Task x Moment
 now =
@@ -43,6 +106,7 @@ now =
 {-| Get the moment that occured the number of milliseconds after the epoch.
 
 Typically only used when receiving a moment that was previously exported.
+Avoid using this for calculations, let this library do the hard work for you.
 
 -}
 fromMsSinceEpoch : Int -> Moment
@@ -52,7 +116,8 @@ fromMsSinceEpoch ms =
 
 {-| Get the number of milliseconds after the epoch that this moment occured.
 
-Do not use this for calculations, only for exporting the moment.
+Typically only used for exporting the moment.
+Avoid using this for calculations, let this library do the hard work for you.
 
 -}
 toMsAfterEpoch : Moment -> Int
@@ -60,24 +125,33 @@ toMsAfterEpoch (Moment ms) =
     ms
 
 
-{-| Move the moment into the future for a duration.
+{-| Move the moment into the future for a time lapse.
 
-Do not use this to move days, weeks, or months. Use the date and time model for that.
-
--}
-intoFuture : Duration -> Moment -> Moment
-intoFuture (Duration durationInMs) (Moment momentInMs) =
-    Moment <| momentInMs + durationInMs
-
-
-{-| Move the moment into the past for a duration.
-
-Do not use this to move days, weeks, or months. Use the date and time model for that.
+If you want to move days, weeks, months or years, use Date or GregorianCalendar
+for that.
 
 -}
-intoPast : Duration -> Moment -> Moment
-intoPast (Duration durationInMs) (Moment momentInMs) =
-    Moment <| momentInMs - durationInMs
+intoFuture : TimeLapse -> Moment -> Moment
+intoFuture (TimeLapse lapseInMs) (Moment momentInMs) =
+    Moment <| momentInMs + lapseInMs
+
+
+{-| Move the moment into the past for a time lapse.
+
+If you want to move days, weeks, months or years, use Date or GregorianCalendar
+for that.
+
+-}
+intoPast : TimeLapse -> Moment -> Moment
+intoPast (TimeLapse lapseInMs) (Moment momentInMs) =
+    Moment <| momentInMs - lapseInMs
+
+
+{-| Get the moment that happened first.
+-}
+earliest : Moment -> Moment -> Moment
+earliest (Moment ms) (Moment ms2) =
+    Moment (min ms ms2)
 
 
 {-| Compare two moments chronologically. Typically used with `List.sortWith`.
@@ -99,80 +173,122 @@ chronologicalComparison (Moment m) (Moment n) =
 
 
 
----- DURATION ----
+---- TimeLapse ----
 
 
-{-| Duration represents a laps of time. It is represented in the moment model,
-because we are thinking about actual elaps of specific milliseconds, seconds, minutes and hours.
+{-| TimeLapses represent a specific time lapse between two moments. For example,
+the time lapse between starting to read the first sentence, and the start of
+reading this sentence.
 
-It has no way of describing days, because that belongs in the Date and Time model.
-For example, moving 24 hours is not the same as moving a day. In Europe it is only
-the same in about 363 days a year, because of daylight time savings.
+It is represented in the moment module, because we are thinking about actual
+elaps of specific seconds, minutes and hours.
+
+**TimeLapse has no way of describing days,** because one day is not always 24
+hours. For example, going 24 hours into the future is not the same as going a
+day into the future. In Europe it is only the same in about 363 days a year,
+because of daylight time savings.
+
+If you want to describe duration of days, weeks, months or years, use Date or
+GregorianCalendar for that.
 
 -}
-type Duration
-    = Duration Int
+type TimeLapse
+    = TimeLapse Int
 
 
-{-| A duration of some milliseconds.
+{-| Direction represents the relative position of one moment regarding another
+moment, whether it is into the future, or into the past.
+-}
+type Direction
+    = IntoTheFuture
+    | IntoThePast
+
+
+{-| A time lapse of some milliseconds.
 Only use positive values, if you want your code to be predictable.
 -}
-milliseconds : Int -> Duration
+milliseconds : Int -> TimeLapse
 milliseconds value =
-    Duration value
+    TimeLapse value
 
 
-{-| A duration of some seconds.
+{-| A time lapse of some seconds.
 Only use positive values, if you want your code to be predictable.
 -}
-seconds : Int -> Duration
+seconds : Int -> TimeLapse
 seconds value =
     milliseconds <| value * 1000
 
 
-{-| A duration of some minutes.
+{-| A time lapse of some minutes.
 Only use positive values, if you want your code to be predictable.
 -}
-minutes : Int -> Duration
+minutes : Int -> TimeLapse
 minutes value =
     seconds <| value * 60
 
 
-{-| A duration of some hours.
+{-| A time lapse of some hours.
 Only use positive values, if you want your code to be predictable.
 -}
-hours : Int -> Duration
+hours : Int -> TimeLapse
 hours value =
     minutes <| value * 60
 
 
-{-| Combine two durations.
+{-| Combine two time lapses.
 
-It has an odd signiture to be able to efficiently use it using the pipe (|>) operator.
+It has an odd signiture to be able to efficiently use it using the pipe (|>)
+operator.
+
 Example:
 
     hours 2
         |> and minutes 45
-        |> viewDuration
+        |> timeLapseView
     --> { hours = 2, minutes = 45, seconds = 0, milliseconds = 0}
 
 -}
-and : (Int -> Duration) -> Int -> Duration -> Duration
-and fct value (Duration duration) =
+and : (Int -> TimeLapse) -> Int -> TimeLapse -> TimeLapse
+and fct value (TimeLapse timeLapse) =
     let
-        (Duration toAdd) =
+        (TimeLapse toAdd) =
             fct value
     in
-    Duration (duration + toAdd)
+    TimeLapse (timeLapse + toAdd)
 
 
-{-| Show the duration split up in milliseconds, seconds, minutes and hours.
--}
-viewDuration : Duration -> { milliseconds : Int, seconds : Int, minutes : Int, hours : Int }
-viewDuration (Duration duration) =
+{-| Show the time lapse split up in milliseconds, seconds, minutes and hours.
+
+Typically used to create your own specific view of the time lapse.
+
     let
+        myTimeLapseView timeLapse =
+            let
+                {hours, minutes} = timeLapseView timeLapse
+            in
+            String.fromInt hours ++ ":" ++ String.fromInt minutes
+    in
+    hours 5
+        |> and minutes 45
+        |> myTimeLapseView
+        --> "5:45"
+
+-}
+timeLapseView : TimeLapse -> { milliseconds : Int, seconds : Int, minutes : Int, hours : Int }
+timeLapseView (TimeLapse timeLapse) =
+    let
+        -- Subtract the whole part, when dividing by the factor, and return the whole part, and the remaining value.
+        substractWhole : Int -> Int -> ( Int, Int )
+        substractWhole value factor =
+            let
+                whole =
+                    value // factor
+            in
+            ( whole, value - whole * factor )
+
         ( wholeHours, withoutHours ) =
-            substractWhole duration 3600000
+            substractWhole timeLapse 3600000
 
         ( wholeMinutes, withoutMinutes ) =
             substractWhole withoutHours 60000
@@ -185,57 +301,31 @@ viewDuration (Duration duration) =
 
 {-| How much time has elapsed between the moments.
 
-The result is a duration, without the indication whether one moment is in the future
+The result is a time lapse, with the indication whether one moment is in the future
 or in the past regarding to the other moment.
 
 -}
-elapsed : Moment -> Moment -> Duration
+elapsed : Moment -> Moment -> ( TimeLapse, Direction )
 elapsed (Moment from) (Moment to) =
-    Duration <| abs <| to - from
+    let
+        diff =
+            to - from
+
+        dir =
+            if diff < 0 then
+                IntoThePast
+
+            else
+                IntoTheFuture
+    in
+    ( TimeLapse <| abs diff, dir )
 
 
-{-| Get the current moment, every duration.
+{-| Get the current moment, every time lapse.
 
 If it is unclear to you why it returns a Sub, please review the Elm architecture.
 
 -}
-every : Duration -> (Moment -> msg) -> Sub msg
-every (Duration duration) function =
-    CoreTime.every (toFloat duration) (CoreTime.posixToMillis >> fromMsSinceEpoch >> function)
-
-
-
----- HELPER FUNCTIONS ----
-
-
-{-| Subtract the whole part, when dividing by the factor, and return the whole part, and the remaining value.
--}
-substractWhole : Int -> Int -> ( Int, Int )
-substractWhole value factor =
-    let
-        whole =
-            value // factor
-    in
-    ( whole, value - whole * factor )
-
-
-{-| Don't use this. Only useful for internal calculations in Date and Time.
--}
-intoFutureForZone : TimeZone -> Moment -> Moment
-intoFutureForZone zone moment =
-    let
-        ms =
-            toMsAfterEpoch moment
-    in
-    fromMsSinceEpoch (ms + TimeZone.relevantOffset zone ms)
-
-
-{-| Don't use this. Only useful for internal calculations in Date and Time.
--}
-intoPastForZone : TimeZone -> Moment -> Moment
-intoPastForZone zone moment =
-    let
-        ms =
-            toMsAfterEpoch moment
-    in
-    fromMsSinceEpoch (ms - TimeZone.relevantOffset zone ms)
+every : TimeLapse -> (Moment -> msg) -> Sub msg
+every (TimeLapse timeLapse) function =
+    CoreTime.every (toFloat timeLapse) (CoreTime.posixToMillis >> fromMsSinceEpoch >> function)
