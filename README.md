@@ -1,6 +1,6 @@
 # Date, Time, Moment
 
-`elm-chrono` simplifies working with dates, time and moments in time.
+`chrono` simplifies working with dates, time and moments in time.
 
 The particular goals of this library are:
 - Make working with dates, times and moments as simple as possible, but not simpler.
