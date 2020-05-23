@@ -3,12 +3,15 @@
 `chrono` simplifies working with dates, time and moments in time.
 
 The particular goals of this library are:
-- Make working with dates, times and moments as simple as possible, but not simpler.
+- Make working with dates, time and moments as simple as possible, but not simpler.
 - Prevent common mistakes by making you think what you actually mean, a date or a moment.
-- Be able to use without knowing all the complexities of dates and times
+- Be able to use without knowing all the complexities of dates and time.
 - Make you have fun with time travel :)
 
 ## Concepts and terminology
+
+When you work with this library, it is important to understand the concepts and
+the terminology used.
 
 ### Moment
 
