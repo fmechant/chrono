@@ -59,10 +59,17 @@ import Time as CoreTime
 {-| A date is an abstract understanding of a period of time.
 It is independent of a time zone or a calendar.
 
+What [elm/time][coretime] calls _Human Time_ and what [Abseil][abseil] calls
+_Civil Time_. A specific date is an abstract concept that is not directly
+linked to a moment in time.
+
 The internal representation of the Date is the Julian Day Number.
 This is the number of days since the Julian day number 0, which is
 Monday, January 1, 4713 BC, proleptic Julian calendar or
 November 24, 4714 BC, in the proleptic Gregorian calendar.
+
+[coretime]: https://package.elm-lang.org/packages/elm/time/latest
+[abseil]: https://abseil.io/docs/cpp/guides/time
 
 -}
 type Date

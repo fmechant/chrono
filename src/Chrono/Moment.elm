@@ -61,6 +61,23 @@ import Time as CoreTime
 
 {-| A specific moment in time. For example, the moment you started reading this
 sentence.
+
+What we call `Moment`, is what [elm/time][coretime] calls `Posix` and what
+[Abseil][abseil] calls _Absolute Time_.
+
+To improve understanding, let's look at the moment of time Neil Armstrong first
+set foot on the moon. If we look at [wikipedia][wikiapollo], it says that
+happened on July 21, 1969 at 02:56 UTC. When viewing live in Europe, you could
+have seen that on July 21 at 04:56. In New York, that would have been on July 20
+at 22:56. Remark that even the date is different.
+
+To be able to represent a moment in time, we pick a moment in the past (the
+epoch), and work relative from that.
+
+[coretime]: https://package.elm-lang.org/packages/elm/time/latest
+[abseil]: https://abseil.io/docs/cpp/guides/time
+[wikiapollo]: https://en.wikipedia.org/wiki/Apollo_11
+
 -}
 type Moment
     = Moment Int
