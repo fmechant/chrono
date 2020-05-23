@@ -185,6 +185,7 @@ fromJDN =
 
 
 {-| Convert to the Julian Day Number.
+Avoid using this for calculations, let this library do the hard work for you.
 -}
 toJDN : Date -> Int
 toJDN (JDN jdn) =
@@ -537,7 +538,8 @@ elapsed (JDN from) (JDN to) =
 ---- Time ----
 
 
-{-| -}
+{-| A specific time of the day, like 14:00:00 or 6:00 PM.
+-}
 type Time
     = Time Int -- The number of milliseconds from noon (12:00).
 
@@ -552,12 +554,20 @@ type Hour
     = Hour Int
 
 
+{-| Create the time that corresponds to the number of milliseconds since noon.
+
+Negative values give a time before noon, positieve in the afternoon.
+
+-}
 fromMsSinceNoon : Int -> Time
 fromMsSinceNoon =
     Time
 
 
 {-| Get the milliseconds since noon.
+
+Avoid using this for calculations, let this library do the hard work for you.
+
 -}
 toMsSinceNoon : Time -> Int
 toMsSinceNoon (Time milliseconds) =
@@ -742,6 +752,8 @@ to12Hours hours24 =
 
 {-| View the time split up in hours, minutes, seconds and milliseconds.
 
+Avoid using this for calculations, let this library do the hard work for you.
+
 Instead of using formatting strings, we prefer here to make it easy to make your
 own timeView functions.
 
@@ -834,7 +846,7 @@ type alias Period =
 
 {-| Mapping defines a bijection between moments and date/times.
 
-It enable to switch between moment and date/time in a period where they map one-to-one (bijectively).
+It enables to switch between moment and date/time in a period where they map one-to-one (bijectively).
 
 -}
 type alias Mapping =
@@ -866,6 +878,12 @@ utc =
     TimeZone mapping []
 
 
+{-| Create a custom zone with the mapping and periods.
+
+Target audience is libraries that read the TimeZone information from the tz
+database.
+
+-}
 customZone : Mapping -> List Period -> TimeZone
 customZone defaultMapping periods =
     TimeZone defaultMapping periods
@@ -904,15 +922,6 @@ zoneWithSameOffset zone =
             Mapping (Moment.fromMsSinceEpoch 0) (withTime time date)
     in
     TimeZone mapping []
-
-
-{-| Get the date at the moment when this task is run and in the time zone
-where this task is run.
--}
-today : Task x Date
-today =
-    Task.map2 (\zone moment -> toDateAndTime zone moment |> .date) (Task.map zoneWithSameOffset CoreTime.here) <|
-        Task.map (Moment.fromMsSinceEpoch << CoreTime.posixToMillis) CoreTime.now
 
 
 {-| Get the date and time at the moment when this task is run and in the time

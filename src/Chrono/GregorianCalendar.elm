@@ -142,6 +142,7 @@ toDate { day, month, year } =
 {-| Convert a date to the year, month and day on the gregorian calendar.
 
 This is typically used in the view to visualize the date.
+Avoid using this for calculations, let this library do the hard work for you.
 
 -}
 fromDate : Date -> GregorianDate
@@ -290,6 +291,9 @@ toMonthNumber month =
 
 {-| Convert the month number to a month.
 1 is January, 12 is December.
+
+Any negative integer and any integer above 12 is mapped to December.
+
 -}
 fromMonthNumber : Int -> Month
 fromMonthNumber number =
