@@ -187,14 +187,6 @@ because if somebody from a different time zone where to participate in the meeti
 he would be late, or early.
 
 
-### A Date Selector
-
-TODO
-
-### Complex Time Travel
-
-TODO
-
 ## Remarks
 
 In this library, we depart from most other date/time libraries. How?
