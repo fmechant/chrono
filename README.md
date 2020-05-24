@@ -71,8 +71,8 @@ import Chrono.GregorianCalendar as Cal exposing (Month(..))
 import Chrono.Moment as Moment exposing (Moment)
 
 let
-    newYorkZone = Date.customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = Date.fromJDN 2440587, time = h24 20 |> m 0 } } []
-    amsterdamZone = Date.customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = Date.fromJDN 2440588, time = h24 2 |> m 0 } } []
+    newYorkZone = Date.customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = Cal.toDate { year = 1969, month = December, day = 31 }, time = h24 20 |> m 0 } } []
+    amsterdamZone = Date.customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = Cal.toDate { year = 1970, month = January, day = 1}, time = h24 2 |> m 0 } } []
 in
 { date = Cal.toDate { year = 2020, month = May, day = 20}, time = h24 16 |> m 0 }
     |> Date.toMoment newYorkZone
@@ -151,8 +151,8 @@ inBrussels { day, month, year, hour, minute} =
 
 brusselsTimeZone : Date.TimeZone 
 brusselsTimeZone =
-    Date.customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = Date.fromJDN 2440588, time = h24 1 |> m 0 } }
-        [ { start = { moment = Moment.fromMsSinceEpoch 1553994000000, dateTime = { date = Date.fromJDN 2458574, time = h24 3 |> m 0 } } } ]
+    Date.customZone { moment = Moment.fromMsSinceEpoch 0, dateTime = { date = Cal.toDate { year = 1970, month = January, day = 1}, time = h24 1 |> m 0 } }
+        [ { start = { moment = Moment.fromMsSinceEpoch 1553994000000, dateTime = { date = Cal.toDate { year = 2019, month = March, day = 31 }, time = h24 3 |> m 0 } } } ]
 
 let
     recurrent: { times: Int, duration: Date.Duration, timeZone: Date.TimeZone} -> Moment -> List Moment
