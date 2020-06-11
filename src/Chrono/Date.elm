@@ -9,7 +9,7 @@ module Chrono.Date exposing
     , timeView, to12Hours, Meridiem(..)
     , fromMsSinceNoon, toMsSinceNoon
     , TimeZone(..), utc, here
-    , customZone, Period, Mapping
+    , customZone, Interval, Mapping
     )
 
 {-| Module for working with dates, time, time zones, durations.
@@ -151,7 +151,7 @@ You use a `TimeZone` to map between a `Moment` and a `DateAndTime`.
 
 ## Creating you own Time Zones
 
-@docs customZone, Period, Mapping
+@docs customZone, Interval, Mapping
 
 -}
 
@@ -192,14 +192,14 @@ toJDN (JDN jdn) =
     jdn
 
 
-{-| Maps a moment to a date/time, when the moment is inside a period with a
+{-| Maps a moment to a date/time, when the moment is inside an interval with a
 specific mapping.
 
-It is used internally to find the date in a period.
+It is used internally to find the date in an interval.
 
-It assumes the moment is inside the period, because it depends on a
+It assumes the moment is inside the interval, because it depends on a
 one-to-one relationship (bijection) between moments and date/time.
-Inside a period, this is correct.
+Inside an interval, this is correct.
 
 -}
 map : Mapping -> Moment -> DateAndTime
@@ -822,31 +822,31 @@ timeView (Time time) =
 
 
 {-| A time zone is defined by a default (bijective) mapping between moments and date/time and
-periods when there is a different mapping.
+intervals when there is a different mapping.
 
-New periods typically begin when there is a change in daylight savings time.
+New intervals typically begin when there is a change in daylight savings time.
 
 TODO: add handling of leap seconds here when moment is in TAI and no longer in Unix time.
 
 -}
 type TimeZone
-    = TimeZone Mapping (List Period)
+    = TimeZone Mapping (List Interval)
 
 
-{-| A period is a part of a time zone where every moment maps one-to-one (bijectively) to a date/time.
+{-| An interval is a part of a time zone where every moment maps one-to-one (bijectively) to a date/time.
 
 To avoid possible conflicts in a time zone, only the start is explicitly defined.
-The end is defined by the start moment of the next period, chronologicaly.
+The end is defined by the start moment of the next interval, chronologicaly.
 
 -}
-type alias Period =
+type alias Interval =
     { start : Mapping
     }
 
 
 {-| Mapping defines a bijection between moments and date/times.
 
-It enables to switch between moment and date/time in a period where they map one-to-one (bijectively).
+It enables to switch between moment and date/time in an interval where they map one-to-one (bijectively).
 
 -}
 type alias Mapping =
@@ -857,7 +857,7 @@ type alias Mapping =
 
 {-| The time zone defined as coordinated universal time or UTC.
 
-It maps 1 January 1970 to the epoch moment and never has a daylight savings time switch.
+It maps midnight of 1 January 1970 to the epoch moment and never has a daylight savings time switch.
 
 TODO: update time zone to take leap seconds into account
 
@@ -878,15 +878,15 @@ utc =
     TimeZone mapping []
 
 
-{-| Create a custom zone with the mapping and periods.
+{-| Create a custom zone with the mapping and intervals.
 
 Target audience is libraries that read the TimeZone information from the tz
 database.
 
 -}
-customZone : Mapping -> List Period -> TimeZone
-customZone defaultMapping periods =
-    TimeZone defaultMapping periods
+customZone : Mapping -> List Interval -> TimeZone
+customZone defaultMapping intervals =
+    TimeZone defaultMapping intervals
 
 
 {-| A naïve implementation of transforming the elm/time Zone to this TimeZone.
@@ -942,47 +942,49 @@ here =
 ---- Conversion functions
 
 
-{-| The relevant period in the time zone for the moment.
+{-| The relevant mapping in the time zone for the moment.
 -}
 relevantMappingForMoment : TimeZone -> Moment -> Mapping
-relevantMappingForMoment (TimeZone mapping periods) moment =
+relevantMappingForMoment (TimeZone mapping intervals) moment =
     List.foldl
-        (\period lastPeriod ->
-            if Moment.earliest period.start.moment moment == period.start.moment then
-                Just period
+        (\interval lastInterval ->
+            if Moment.earliest interval.start.moment moment == interval.start.moment then
+                Just interval
 
             else
-                lastPeriod
+                lastInterval
         )
         Nothing
-        periods
+        intervals
         |> Maybe.map .start
         |> Maybe.withDefault mapping
 
 
+{-| The relevant mapping in the time zone for the date and time.
+-}
 relevantMappingForDateAndTime : TimeZone -> DateAndTime -> Mapping
-relevantMappingForDateAndTime (TimeZone mapping periods) { date, time } =
+relevantMappingForDateAndTime (TimeZone mapping intervals) { date, time } =
     List.foldl
-        (\period lastPeriod ->
+        (\interval lastInterval ->
             case
-                ( chronologicalDateComparison period.start.dateTime.date date
-                , chronologicalTimeComparison period.start.dateTime.time time
+                ( chronologicalDateComparison interval.start.dateTime.date date
+                , chronologicalTimeComparison interval.start.dateTime.time time
                 )
             of
                 ( GT, _ ) ->
-                    lastPeriod
+                    lastInterval
 
                 ( LT, _ ) ->
-                    Just period
+                    Just interval
 
                 ( EQ, GT ) ->
-                    lastPeriod
+                    lastInterval
 
                 ( EQ, _ ) ->
-                    Just period
+                    Just interval
         )
         Nothing
-        periods
+        intervals
         |> Maybe.map .start
         |> Maybe.withDefault mapping
 
@@ -1018,7 +1020,7 @@ toMoment zone forDateTime =
         (Time time) =
             forDateTime.time
 
-        -- We can do this, because there is a bijection between date/time and moment inside a period
+        -- We can do this, because there is a bijection between date/time and moment inside an interval
         timeLapse =
             Moment.hours (24 * (date - startDate))
                 |> Moment.and Moment.milliseconds (time - startTime)

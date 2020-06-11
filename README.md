@@ -192,8 +192,8 @@ he would be late, or early.
 In this library, we depart from most other date/time libraries. How?
 - We consider a Date as a specific concept, irrelative of moments in time. We avoid using UTC to mix the concepts.
 To be able to represent a date, we pick a date in the past (epoch date), and work relative from that.
-- TimeZone is completely independent of UTC. It is defined as periods,
-with each period defining a (bijective) mapping between moment and date/time. This
+- TimeZone is completely independent of UTC. It is defined as intervals,
+with each interval defining a (bijective) mapping between moment and date/time. This
 is something very new to date/time libraries, but when I started
 thinking this way, everything got way simpler.
 
