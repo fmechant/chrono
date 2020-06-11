@@ -160,7 +160,7 @@ all =
                             |> toDateAndTime utc
                             |> toMoment utc
                             |> Expect.equal aMoment
-                , fuzz2 fuzzTimeZoneNoPeriods fuzzMoment "converting the date and time in any time zone and back to moment should be consistent." <|
+                , fuzz2 fuzzTimeZoneNoIntervals fuzzMoment "converting the date and time in any time zone and back to moment should be consistent." <|
                     \aZone aMoment ->
                         aMoment
                             |> toDateAndTime aZone
@@ -250,23 +250,23 @@ all =
             ]
         , describe "Details about Time Zones"
             [ describe "toDateAndTime"
-                [ fuzz fuzzTimeZoneWithPeriod "should return 'default' date/time before start of period" <|
-                    \( aZone, defaultMapping, period ) ->
+                [ fuzz fuzzTimeZoneWithInterval "should return 'default' date/time before start of interval" <|
+                    \( aZone, defaultMapping, interval ) ->
                         defaultMapping.moment
                             |> toDateAndTime aZone
                             |> Expect.equal defaultMapping.dateTime
-                , fuzz fuzzTimeZoneWithPeriod "should return 'mapped' date/time at start of period" <|
-                    \( aZone, defaultMapping, period ) ->
-                        period.start.moment
+                , fuzz fuzzTimeZoneWithInterval "should return 'mapped' date/time at start of interval" <|
+                    \( aZone, defaultMapping, interval ) ->
+                        interval.start.moment
                             |> toDateAndTime aZone
-                            |> Expect.equal period.start.dateTime
-                , fuzz fuzzTimeZoneWithPeriod "should return 'mapped' date/time after start of period" <|
-                    \( aZone, defaultMapping, period ) ->
-                        period.start.moment
+                            |> Expect.equal interval.start.dateTime
+                , fuzz fuzzTimeZoneWithInterval "should return 'mapped' date/time after start of interval" <|
+                    \( aZone, defaultMapping, interval ) ->
+                        interval.start.moment
                             |> Moment.intoFuture (Moment.hours 24)
-                            -- 24h = 1d here because we stay in the period
+                            -- 24h = 1d here because we stay in the interval
                             |> toDateAndTime aZone
-                            |> Expect.equal { date = intoFuture (days 1) period.start.dateTime.date, time = period.start.dateTime.time }
+                            |> Expect.equal { date = intoFuture (days 1) interval.start.dateTime.date, time = interval.start.dateTime.time }
                 ]
             ]
         ]
@@ -288,7 +288,7 @@ daylightSavings =
             customZone { moment = epoch, dateTime = { date = epochDate, time = h24 1 |> m 0 } }
                 [ { start = { moment = switchMoment, dateTime = { date = switchDate, time = h24 3 |> m 0 } } } ]
     in
-    describe "zone with daylight saving period"
+    describe "zone with daylight saving interval"
         [ test "should convert toMoment correctly, an hour before daylight saving" <|
             \() ->
                 switchDate

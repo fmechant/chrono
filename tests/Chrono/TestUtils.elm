@@ -11,8 +11,8 @@ module Chrono.TestUtils exposing
     , fuzzThursday
     , fuzzTime
     , fuzzTimeLapse
-    , fuzzTimeZoneNoPeriods
-    , fuzzTimeZoneWithPeriod
+    , fuzzTimeZoneNoIntervals
+    , fuzzTimeZoneWithInterval
     , fuzzYear
     )
 
@@ -73,8 +73,8 @@ fuzzYear =
     Fuzz.intRange 1900 2100
 
 
-fuzzTimeZoneNoPeriods : Fuzz.Fuzzer Date.TimeZone
-fuzzTimeZoneNoPeriods =
+fuzzTimeZoneNoIntervals : Fuzz.Fuzzer Date.TimeZone
+fuzzTimeZoneNoIntervals =
     let
         ftz moment dateAndTime =
             Date.customZone { moment = moment, dateTime = dateAndTime } []
@@ -82,22 +82,22 @@ fuzzTimeZoneNoPeriods =
     Fuzz.map2 ftz fuzzMoment fuzzDateAndTime
 
 
-fuzzTimeZoneWithPeriod : Fuzz.Fuzzer ( Date.TimeZone, Date.Mapping, Date.Period )
-fuzzTimeZoneWithPeriod =
+fuzzTimeZoneWithInterval : Fuzz.Fuzzer ( Date.TimeZone, Date.Mapping, Date.Interval )
+fuzzTimeZoneWithInterval =
     let
-        ftz moment dateAndTime timeLapse dateAndTimeInPeriod =
+        ftz moment dateAndTime timeLapse dateAndTimeInInterval =
             let
-                period =
+                interval =
                     { start =
                         { moment = Moment.intoFuture timeLapse moment
-                        , dateTime = dateAndTimeInPeriod
+                        , dateTime = dateAndTimeInInterval
                         }
                     }
 
                 mapping =
                     { moment = moment, dateTime = dateAndTime }
             in
-            ( Date.customZone mapping [ period ], mapping, period )
+            ( Date.customZone mapping [ interval ], mapping, interval )
     in
     Fuzz.map4 ftz fuzzMoment fuzzDateAndTime fuzzNonZeroTimeLapse fuzzDateAndTime
 
