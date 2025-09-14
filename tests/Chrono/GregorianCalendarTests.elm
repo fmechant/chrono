@@ -107,7 +107,7 @@ all =
                         toDate { day = 14, month = October, year = 2005 }
                             |> travel (intoFuture (months 5 stayInSameMonth))
                             |> Expect.equal (toDate { day = 14, month = March, year = 2006 })
-                , fuzz3 (Fuzz.intRange 1 28) fuzzMonth (Fuzz.tuple ( fuzzYear, Fuzz.intRange 1 100 )) "moving years" <|
+                , fuzz3 (Fuzz.intRange 1 28) fuzzMonth (Fuzz.pair fuzzYear (Fuzz.intRange 1 100)) "moving years" <|
                     \aDay aMonth ( aYear, numberOfYears ) ->
                         toDate { year = aYear, month = aMonth, day = aDay }
                             |> travel (intoFuture (years numberOfYears stayInSameMonth))
